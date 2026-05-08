@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.2
+# Markdown Viewer PWA — V1.3
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 

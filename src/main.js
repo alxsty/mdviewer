@@ -3,12 +3,15 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
+const SETTINGS_SCHEMA_VERSION = 2;
+const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
   theme: 'dark',
   fontFamily: 'system',
   fontSize: 18,
-  showLineNumbers: true,
+  showLineNumbers: false,
   copyWithLineNumbers: false,
+  settingsSchemaVersion: SETTINGS_SCHEMA_VERSION,
   sourcePanelOpen: false
 });
 
@@ -71,7 +74,19 @@ const state = {
 function loadSettings() {
   try {
     const rawValue = localStorage.getItem(SETTINGS_KEY);
-    return rawValue ? { ...DEFAULT_SETTINGS, ...JSON.parse(rawValue) } : { ...DEFAULT_SETTINGS };
+    if (!rawValue) {
+      return { ...DEFAULT_SETTINGS };
+    }
+
+    const parsedSettings = JSON.parse(rawValue);
+    const migratedSettings = { ...DEFAULT_SETTINGS, ...parsedSettings };
+
+    if (parsedSettings.settingsSchemaVersion !== SETTINGS_SCHEMA_VERSION) {
+      migratedSettings.showLineNumbers = DEFAULT_SETTINGS.showLineNumbers;
+      migratedSettings.settingsSchemaVersion = SETTINGS_SCHEMA_VERSION;
+    }
+
+    return migratedSettings;
   } catch (_error) {
     return { ...DEFAULT_SETTINGS };
   }
@@ -288,7 +303,22 @@ function renderToc(tocItems) {
     button.className = 'toc-item';
     button.dataset.slug = item.slug;
     button.style.paddingLeft = `${0.55 + Math.max(item.level - 1, 0) * 0.85}rem`;
-    button.innerHTML = `${escapeHtml(item.title)}${item.lineStart ? `<small>${item.lineStart}</small>` : ''}`;
+    button.title = item.title;
+
+    const title = document.createElement('span');
+    title.className = 'toc-title';
+    title.textContent = item.title;
+
+    button.append(title);
+
+    if (item.lineStart) {
+      const line = document.createElement('span');
+      line.className = 'toc-line-badge';
+      line.textContent = item.lineStart;
+      line.setAttribute('aria-label', `riga ${item.lineStart}`);
+      button.append(line);
+    }
+
     button.addEventListener('click', () => scrollToHeading(item.slug));
     fragment.append(button);
   }
@@ -504,11 +534,25 @@ function isStandaloneDisplayMode() {
   return window.matchMedia('(display-mode: standalone)').matches
     || window.matchMedia('(display-mode: fullscreen)').matches
     || window.matchMedia('(display-mode: minimal-ui)').matches
+    || window.matchMedia('(display-mode: window-controls-overlay)').matches
+    || document.referrer.startsWith('android-app://')
     || window.navigator.standalone === true;
 }
 
+function isAppInstalledKnown() {
+  return localStorage.getItem(INSTALL_STATE_KEY) === 'installed';
+}
+
+function rememberInstalledApp() {
+  localStorage.setItem(INSTALL_STATE_KEY, 'installed');
+}
+
 function updateInstallButtonVisibility() {
-  elements.installButton.hidden = isStandaloneDisplayMode() || !state.deferredInstallPrompt;
+  if (isStandaloneDisplayMode()) {
+    rememberInstalledApp();
+  }
+
+  elements.installButton.hidden = isStandaloneDisplayMode() || isAppInstalledKnown() || !state.deferredInstallPrompt;
 }
 
 function createUpdateBanner(registration) {
@@ -599,17 +643,29 @@ function bindInstallFlow() {
   });
 
   window.addEventListener('appinstalled', () => {
+    rememberInstalledApp();
     state.deferredInstallPrompt = null;
     updateInstallButtonVisibility();
     setStatus('App installata.');
   });
 
-  const standaloneQuery = window.matchMedia('(display-mode: standalone)');
-  if (standaloneQuery.addEventListener) {
-    standaloneQuery.addEventListener('change', updateInstallButtonVisibility);
-  } else if (standaloneQuery.addListener) {
-    standaloneQuery.addListener(updateInstallButtonVisibility);
+  const displayModeQueries = [
+    '(display-mode: standalone)',
+    '(display-mode: fullscreen)',
+    '(display-mode: minimal-ui)',
+    '(display-mode: window-controls-overlay)'
+  ].map((query) => window.matchMedia(query));
+
+  for (const query of displayModeQueries) {
+    if (query.addEventListener) {
+      query.addEventListener('change', updateInstallButtonVisibility);
+    } else if (query.addListener) {
+      query.addListener(updateInstallButtonVisibility);
+    }
   }
+
+  window.setTimeout(updateInstallButtonVisibility, 250);
+  window.setTimeout(updateInstallButtonVisibility, 1200);
 
   elements.installButton.addEventListener('click', async () => {
     if (!state.deferredInstallPrompt || isStandaloneDisplayMode()) {
