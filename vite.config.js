@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
 
     build: {
       target: 'es2022',
-      sourcemap: true,
+      sourcemap: !isGitHubPagesBuild,
       assetsInlineLimit: 4096,
       rollupOptions: {
         output: {

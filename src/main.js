@@ -62,6 +62,7 @@ const state = {
   selectedLineEnd: 1,
   selectedBlockElement: null,
   deferredInstallPrompt: null,
+  updateReloadPending: false,
   headingObserver: null,
   activeHeadingSlug: '',
   frontmatter: null
@@ -499,33 +500,127 @@ function selectRenderedBlock(block, options = {}) {
   }
 }
 
+function isStandaloneDisplayMode() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.matchMedia('(display-mode: fullscreen)').matches
+    || window.matchMedia('(display-mode: minimal-ui)').matches
+    || window.navigator.standalone === true;
+}
+
+function updateInstallButtonVisibility() {
+  elements.installButton.hidden = isStandaloneDisplayMode() || !state.deferredInstallPrompt;
+}
+
+function createUpdateBanner(registration) {
+  const existingBanner = document.querySelector('[data-update-banner="true"]');
+  if (existingBanner) {
+    return;
+  }
+
+  const banner = document.createElement('div');
+  banner.className = 'update-banner';
+  banner.dataset.updateBanner = 'true';
+  banner.setAttribute('role', 'status');
+  banner.innerHTML = `
+    <span>Nuova versione disponibile.</span>
+    <button type="button" class="update-banner__button">Aggiorna</button>
+  `;
+
+  const button = banner.querySelector('button');
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    button.textContent = 'Aggiornamento…';
+
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      return;
+    }
+
+    window.location.reload();
+  });
+
+  document.body.append(banner);
+}
+
+function watchServiceWorkerUpdates(registration) {
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    createUpdateBanner(registration);
+  }
+
+  registration.addEventListener('updatefound', () => {
+    const newWorker = registration.installing;
+    if (!newWorker) {
+      return;
+    }
+
+    newWorker.addEventListener('statechange', () => {
+      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        createUpdateBanner(registration);
+      }
+    });
+  });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (state.updateReloadPending) {
+      return;
+    }
+
+    state.updateReloadPending = true;
+    window.location.reload();
+  });
+}
+
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
     return;
   }
 
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
-      .catch((error) => setStatus(`Service worker non registrato: ${error instanceof Error ? error.message : String(error)}`));
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+        scope: import.meta.env.BASE_URL
+      });
+
+      watchServiceWorkerUpdates(registration);
+      registration.update().catch(() => undefined);
+    } catch (error) {
+      setStatus(`Service worker non registrato: ${error instanceof Error ? error.message : String(error)}`);
+    }
   });
 }
 
 function bindInstallFlow() {
+  updateInstallButtonVisibility();
+
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     state.deferredInstallPrompt = event;
-    elements.installButton.hidden = false;
+    updateInstallButtonVisibility();
   });
 
+  window.addEventListener('appinstalled', () => {
+    state.deferredInstallPrompt = null;
+    updateInstallButtonVisibility();
+    setStatus('App installata.');
+  });
+
+  const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+  if (standaloneQuery.addEventListener) {
+    standaloneQuery.addEventListener('change', updateInstallButtonVisibility);
+  } else if (standaloneQuery.addListener) {
+    standaloneQuery.addListener(updateInstallButtonVisibility);
+  }
+
   elements.installButton.addEventListener('click', async () => {
-    if (!state.deferredInstallPrompt) {
+    if (!state.deferredInstallPrompt || isStandaloneDisplayMode()) {
+      updateInstallButtonVisibility();
       return;
     }
 
     state.deferredInstallPrompt.prompt();
     await state.deferredInstallPrompt.userChoice;
     state.deferredInstallPrompt = null;
-    elements.installButton.hidden = true;
+    updateInstallButtonVisibility();
   });
 }
 

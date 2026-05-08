@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.1
+# Markdown Viewer PWA — V1.2
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 
@@ -17,6 +17,9 @@ PWA installabile per visualizzare file Markdown locali in sola lettura.
 - tema chiaro/scuro
 - scelta font e dimensione
 - service worker + manifest PWA
+- banner di aggiornamento app quando è disponibile una nuova versione
+- pulsante installazione nascosto quando l’app è già avviata come PWA
+- controlli switch per numeri linea e copia con numero
 - drag & drop file Markdown
 
 ## Sintassi Markdown supportata
@@ -84,6 +87,14 @@ La cartella pubblicabile è:
 dist/
 ```
 
+## Build GitHub Pages
+
+```bash
+npm run build:pages
+```
+
+La build GitHub Pages usa `base: /mdviewer/` e non genera file `.map` di produzione.
+
 ## Installazione su Android
 
 Per vedere il prompt di installazione PWA, Android/Chrome richiede in pratica:
@@ -111,3 +122,9 @@ Quindi per test reale su smartphone conviene pubblicare `dist/` su un hosting HT
 - Il caricamento da URL è predisponibile come V2, ma non incluso nella V1.
 - Mermaid, KaTeX/MathJax, parsing YAML completo e persistenza dell'ultimo documento in IndexedDB sono buoni candidati per la V2.
 - La corrispondenza linea/blocco usa le mappe sorgente dei token Markdown. È molto utile per navigazione/copia, ma non pretende di mostrare un numero per ogni riga visuale dopo il word-wrap.
+
+
+## Aggiornamento della PWA installata
+
+Quando viene pubblicata una nuova build, il service worker la rileva e mostra un banner **Nuova versione disponibile**.
+Premendo **Aggiorna**, la PWA attiva il nuovo service worker e ricarica la pagina una sola volta.
