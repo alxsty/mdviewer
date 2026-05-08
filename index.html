@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="description" content="PWA per visualizzare Markdown locali con indice, numeri di linea e strumenti di copia." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml" />
+    <title>Markdown Viewer PWA</title>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="topbar">
+        <div class="brand" aria-label="Applicazione Markdown Viewer">
+          <span class="brand-mark">MD</span>
+          <span class="brand-title">Markdown Viewer</span>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="file-button">
+            <input id="fileInput" type="file" accept=".md,.markdown,.mdown,.mkd,text/markdown,text/plain" />
+            <span>Apri file</span>
+          </label>
+
+          <button id="tocToggle" class="icon-button mobile-only" type="button" title="Indice" aria-label="Apri indice">☰</button>
+          <button id="linePanelToggle" class="icon-button" type="button" title="Pannello righe" aria-label="Mostra o nascondi pannello righe">#</button>
+          <button id="themeToggle" class="icon-button" type="button" title="Tema chiaro/scuro" aria-label="Cambia tema">◐</button>
+          <button id="installButton" class="ghost-button" type="button" hidden>Installa</button>
+        </div>
+      </header>
+
+      <div class="settingsbar" aria-label="Impostazioni visualizzazione">
+        <label>
+          <span>Font</span>
+          <select id="fontFamilySelect">
+            <option value="system">Sistema</option>
+            <option value="serif">Serif</option>
+            <option value="mono">Mono</option>
+            <option value="opendyslexic">Dyslexic friendly</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Dimensione</span>
+          <input id="fontSizeInput" type="range" min="14" max="26" step="1" />
+          <output id="fontSizeOutput"></output>
+        </label>
+
+        <label class="check-control">
+          <input id="showLineNumbersInput" type="checkbox" />
+          <span>Numeri linea</span>
+        </label>
+
+        <label class="check-control">
+          <input id="copyWithLineNumbersInput" type="checkbox" />
+          <span>Copia con numero</span>
+        </label>
+      </div>
+
+      <main class="workspace">
+        <aside id="tocPanel" class="toc-panel" aria-label="Indice degli heading">
+          <div class="panel-header">
+            <strong>Indice</strong>
+            <button id="tocClose" class="icon-button mobile-only" type="button" aria-label="Chiudi indice">×</button>
+          </div>
+          <nav id="tocList" class="toc-list">
+            <p class="empty-panel">Apri un file Markdown per generare l’indice.</p>
+          </nav>
+        </aside>
+
+        <section class="reader-area" aria-label="Documento Markdown renderizzato">
+          <div id="dropZone" class="drop-zone" hidden>
+            <strong>Trascina qui un file Markdown</strong>
+            <span>oppure usa “Apri file”.</span>
+          </div>
+
+          <article id="markdownBody" class="markdown-body empty-state">
+            <h1>Markdown Viewer PWA</h1>
+            <p>Apri un file <code>.md</code> dal dispositivo. L’app renderizza il documento in sola lettura, crea l’indice dagli heading e permette di copiare righe o blocchi dal sorgente.</p>
+            <p class="hint">Per file da qualche MB il parsing viene eseguito in un Web Worker, così l’interfaccia rimane usabile.</p>
+          </article>
+        </section>
+
+        <aside id="sourcePanel" class="source-panel" aria-label="Pannello righe sorgente" hidden>
+          <div class="panel-header">
+            <strong>Righe</strong>
+            <button id="sourceClose" class="icon-button" type="button" aria-label="Chiudi pannello righe">×</button>
+          </div>
+
+          <div class="line-tools">
+            <label>
+              <span>Da</span>
+              <input id="lineFromInput" type="number" min="1" value="1" />
+            </label>
+            <label>
+              <span>A</span>
+              <input id="lineToInput" type="number" min="1" value="1" />
+            </label>
+            <button id="copyRangeButton" class="primary-button" type="button">Copia</button>
+          </div>
+
+          <p class="small-note">Click su una riga per selezionarla. Shift+click per estendere l’intervallo. Click su un blocco renderizzato per agganciare le sue righe sorgente.</p>
+
+          <div id="sourceViewport" class="source-viewport" tabindex="0" aria-label="Righe sorgente Markdown">
+            <div id="sourceSpacer" class="source-spacer"></div>
+            <div id="sourceItems" class="source-items"></div>
+          </div>
+        </aside>
+      </main>
+
+      <footer id="statusbar" class="statusbar" role="status">Pronto.</footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

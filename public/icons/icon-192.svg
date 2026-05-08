@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Markdown Viewer">
+  <rect width="192" height="192" rx="42" fill="#0f172a"/>
+  <path d="M34 56h124c8.8 0 16 7.2 16 16v48c0 8.8-7.2 16-16 16H34c-8.8 0-16-7.2-16-16V72c0-8.8 7.2-16 16-16Z" fill="#111827" stroke="#38bdf8" stroke-width="6"/>
+  <path d="M42 122V74h14l16 20 16-20h14v48H86V98l-14 17-14-17v24H42Zm76-48h16v30h16l-24 24-24-24h16V74Z" fill="#e0f2fe"/>
+</svg>
