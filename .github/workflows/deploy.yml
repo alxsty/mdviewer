@@ -43,7 +43,51 @@ jobs:
         run: npm cache verify
 
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        shell: bash
+        run: |
+          set -o pipefail
+
+          echo "::group::Node/npm versions"
+          node --version
+          npm --version
+          npm config get cache
+          npm config ls
+          echo "::endgroup::"
+
+          echo "::group::npm ci"
+          npm ci \
+            --no-audit \
+            --no-fund \
+            --loglevel verbose \
+            --timing \
+            --foreground-scripts \
+            2>&1 | tee npm-ci-console.log
+          echo "::endgroup::"
+
+      - name: Collect npm logs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p workflow-debug/npm
+
+          cp npm-ci-console.log workflow-debug/npm/ 2>/dev/null || true
+
+          echo "NPM cache path:" > workflow-debug/npm/npm-cache-path.txt
+          npm config get cache >> workflow-debug/npm/npm-cache-path.txt || true
+
+          if [ -d "$HOME/.npm/_logs" ]; then
+            cp -R "$HOME/.npm/_logs" workflow-debug/npm/npm-_logs
+          fi
+
+          find workflow-debug -type f -maxdepth 5 -print
+
+      - name: Upload npm debug logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-debug-logs
+          path: workflow-debug/
+          retention-days: 7
 
       - name: Build GitHub Pages version
         run: npm run build:pages
