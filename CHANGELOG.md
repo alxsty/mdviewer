@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.8
+
+- Rifinito il box **Sorgente**: rimosse le label testuali `Da` / `A` dai campi intervallo.
+- Aggiunto separatore grafico `→` tra riga iniziale e riga finale.
+- Centrati i numeri nei campi intervallo con cifre tabulari per migliorare la leggibilità.
+
 ## 2.0.7
 
 - Corretto un artefatto grafico nella barra impostazioni: nascosta la scrollbar/corner strip laterale quando la barra non necessita di scroll visibile.

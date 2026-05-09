@@ -156,14 +156,11 @@
           </div>
 
           <div class="line-tools">
-            <label>
-              <span>Da</span>
-              <input id="lineFromInput" type="number" min="1" value="1" />
-            </label>
-            <label>
-              <span>A</span>
-              <input id="lineToInput" type="number" min="1" value="1" />
-            </label>
+            <div class="source-range-control" aria-label="Intervallo righe sorgente">
+              <input id="lineFromInput" class="source-range-input" type="number" min="1" value="1" aria-label="Riga iniziale" title="Riga iniziale" />
+              <span class="source-range-separator" aria-hidden="true">→</span>
+              <input id="lineToInput" class="source-range-input" type="number" min="1" value="1" aria-label="Riga finale" title="Riga finale" />
+            </div>
             <button id="copyRangeButton" class="icon-button copy-range-button" type="button" title="Copia righe selezionate" aria-label="Copia righe selezionate">
               <svg class="icon-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
                 <path d="M8 7.75A2.75 2.75 0 0 1 10.75 5h6.5A2.75 2.75 0 0 1 20 7.75v6.5A2.75 2.75 0 0 1 17.25 17h-6.5A2.75 2.75 0 0 1 8 14.25v-6.5Zm2.75-.95c-.52 0-.95.43-.95.95v6.5c0 .52.43.95.95.95h6.5c.52 0 .95-.43.95-.95v-6.5c0-.52-.43-.95-.95-.95h-6.5Z"/>

@@ -1196,6 +1196,33 @@ body.line-numbers .markdown-body [data-line-start]::before {
   border-bottom: 1px solid var(--panel-border);
 }
 
+.source-range-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.source-range-input {
+  width: 4.9rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.source-range-input::-webkit-outer-spin-button,
+.source-range-input::-webkit-inner-spin-button {
+  margin: 0;
+}
+
+.source-range-separator {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1;
+  opacity: 0.72;
+  user-select: none;
+}
+
 .line-tools .copy-range-button,
 .line-tools .source-copy-toggle {
   width: 2.25rem;
