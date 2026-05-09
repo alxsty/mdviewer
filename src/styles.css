@@ -1122,19 +1122,17 @@ body.line-numbers .markdown-body [data-line-start]::before {
   border-bottom: 1px solid var(--panel-border);
 }
 
-.line-tools .copy-range-button {
+.line-tools .copy-range-button,
+.line-tools .source-copy-toggle {
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
+  flex: 0 0 auto;
 }
 
-.line-tools .source-copy-option {
-  margin-left: 0.15rem;
-  padding-left: 0.15rem;
-}
-
-.line-tools .source-copy-option span:last-child {
-  color: var(--muted);
+.line-tools .source-copy-toggle {
+  font-size: 0.68rem;
+  letter-spacing: -0.04em;
 }
 
 .source-panel .small-note {

@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.2';
+const APP_VERSION = '2.0.3';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
@@ -32,6 +32,8 @@ const MAX_TOAST_LENGTH = 160;
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
 const SEARCH_MIN_LENGTH = 3;
 const SEARCH_DEBOUNCE_MS = 150;
+const TOUCH_RANGE_LONG_PRESS_MS = 520;
+const TOUCH_RANGE_MOVE_TOLERANCE_PX = 12;
 const SEARCH_EXCLUDE_SELECTOR = '[data-search-exclude=\"true\"], .metadata-card';
 
 const elements = Object.freeze({
@@ -50,7 +52,7 @@ const elements = Object.freeze({
   fontFamilySelect: document.querySelector('#fontFamilySelect'),
   fontSizeInput: document.querySelector('#fontSizeInput'),
   fontSizeOutput: document.querySelector('#fontSizeOutput'),
-  copyWithLineNumbersInput: document.querySelector('#copyWithLineNumbersInput'),
+  copyWithLineNumbersToggle: document.querySelector('#copyWithLineNumbersToggle'),
   markdownBody: document.querySelector('#markdownBody'),
   dropZone: document.querySelector('#dropZone'),
   statusbar: document.querySelector('#statusbar'),
@@ -95,7 +97,14 @@ const state = {
   searchHits: [],
   currentSearchIndex: -1,
   searchDebounceTimer: null,
-  previousCurrentSearchHit: null
+  previousCurrentSearchHit: null,
+  touchRangeAnchorLine: null,
+  touchRangeMode: false,
+  touchLongPressTimer: null,
+  touchPointerStartX: 0,
+  touchPointerStartY: 0,
+  touchLongPressBlock: null,
+  suppressNextMarkdownClick: false
 };
 
 function loadSettings() {
@@ -212,6 +221,15 @@ function syncControlStates() {
     settingsPanelOpen,
     'Nascondi impostazioni',
     'Mostra impostazioni'
+  );
+
+  setPressedState(
+    elements.copyWithLineNumbersToggle,
+    Boolean(state.settings.copyWithLineNumbers),
+    'Disattiva copia con numeri di riga',
+    'Copia con numeri di riga',
+    '123',
+    '123'
   );
 }
 
@@ -565,7 +583,6 @@ function applySettings() {
   elements.fontFamilySelect.value = state.settings.fontFamily;
   elements.fontSizeInput.value = String(state.settings.fontSize);
   elements.fontSizeOutput.textContent = `${state.settings.fontSize}px`;
-  elements.copyWithLineNumbersInput.checked = Boolean(state.settings.copyWithLineNumbers);
   elements.darkThemeInput.checked = state.settings.theme === 'dark';
   elements.appVersion.textContent = `v${APP_VERSION}`;
   updateSearchOptionButtons();
@@ -995,6 +1012,100 @@ function selectRenderedBlock(block, options = {}) {
   }
 }
 
+function clearTouchRangeMode() {
+  state.touchRangeAnchorLine = null;
+  state.touchRangeMode = false;
+}
+
+function cancelTouchLongPressTimer() {
+  if (state.touchLongPressTimer) {
+    window.clearTimeout(state.touchLongPressTimer);
+    state.touchLongPressTimer = null;
+  }
+}
+
+function selectMarkdownBlockFromEvent(event) {
+  const block = event.target.closest('[data-line-start][data-line-end]');
+  if (!block || !elements.markdownBody.contains(block)) {
+    return null;
+  }
+  return block;
+}
+
+function extendRenderedRangeFromAnchor(block) {
+  const range = getRenderedBlockLineRange(block);
+  const anchorLine = state.touchRangeAnchorLine || state.selectedLineStart;
+  const targetLine = range.end >= anchorLine ? range.end : range.start;
+
+  selectRenderedBlock(block, { updateRange: false });
+  setSelectedLineRange(anchorLine, targetLine, { scrollSource: true, updateBlock: false });
+  clearTouchRangeMode();
+  setStatus(`Intervallo sorgente selezionato: righe ${state.selectedLineStart}-${state.selectedLineEnd}.`);
+}
+
+function handleRenderedBlockClick(event) {
+  if (state.suppressNextMarkdownClick) {
+    state.suppressNextMarkdownClick = false;
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
+  const block = selectMarkdownBlockFromEvent(event);
+  if (!block) {
+    return;
+  }
+
+  if (state.touchRangeMode && !event.shiftKey) {
+    extendRenderedRangeFromAnchor(block);
+    return;
+  }
+
+  if (!event.shiftKey) {
+    clearTouchRangeMode();
+  }
+
+  selectRenderedBlock(block, { extendRange: event.shiftKey });
+}
+
+function startRenderedBlockTouchRange(event) {
+  if (event.pointerType !== 'touch' && event.pointerType !== 'pen') {
+    return;
+  }
+
+  const block = selectMarkdownBlockFromEvent(event);
+  if (!block) {
+    return;
+  }
+
+  cancelTouchLongPressTimer();
+  state.touchLongPressBlock = block;
+  state.touchPointerStartX = event.clientX;
+  state.touchPointerStartY = event.clientY;
+
+  state.touchLongPressTimer = window.setTimeout(() => {
+    const range = getRenderedBlockLineRange(block);
+    state.touchLongPressTimer = null;
+    state.touchRangeAnchorLine = range.start;
+    state.touchRangeMode = true;
+    state.suppressNextMarkdownClick = true;
+    selectRenderedBlock(block);
+    setStatus(`Ancora selezione impostata alla riga ${range.start}. Tocca un altro blocco per estendere l’intervallo.`);
+  }, TOUCH_RANGE_LONG_PRESS_MS);
+}
+
+function handleRenderedBlockTouchMove(event) {
+  if (!state.touchLongPressTimer) {
+    return;
+  }
+
+  const deltaX = Math.abs(event.clientX - state.touchPointerStartX);
+  const deltaY = Math.abs(event.clientY - state.touchPointerStartY);
+  if (deltaX > TOUCH_RANGE_MOVE_TOLERANCE_PX || deltaY > TOUCH_RANGE_MOVE_TOLERANCE_PX) {
+    cancelTouchLongPressTimer();
+  }
+}
+
 function isStandaloneDisplayMode() {
   return window.matchMedia('(display-mode: standalone)').matches
     || window.matchMedia('(display-mode: fullscreen)').matches
@@ -1275,10 +1386,10 @@ function bindEvents() {
     applySettings();
   });
 
-  elements.copyWithLineNumbersInput.addEventListener('change', () => {
-    state.settings.copyWithLineNumbers = elements.copyWithLineNumbersInput.checked;
+  elements.copyWithLineNumbersToggle.addEventListener('click', () => {
+    state.settings.copyWithLineNumbers = !state.settings.copyWithLineNumbers;
     saveSettings();
-    applySettings();
+    syncControlStates();
   });
 
   elements.lineFromInput.addEventListener('change', () => {
@@ -1307,13 +1418,15 @@ function bindEvents() {
     }
   });
 
-  elements.markdownBody.addEventListener('click', (event) => {
-    const block = event.target.closest('[data-line-start][data-line-end]');
-    if (!block || !elements.markdownBody.contains(block)) {
-      return;
+  elements.markdownBody.addEventListener('click', handleRenderedBlockClick);
+  elements.markdownBody.addEventListener('pointerdown', startRenderedBlockTouchRange);
+  elements.markdownBody.addEventListener('pointermove', handleRenderedBlockTouchMove);
+  elements.markdownBody.addEventListener('pointerup', cancelTouchLongPressTimer);
+  elements.markdownBody.addEventListener('pointercancel', cancelTouchLongPressTimer);
+  elements.markdownBody.addEventListener('contextmenu', (event) => {
+    if (state.touchRangeMode || state.suppressNextMarkdownClick) {
+      event.preventDefault();
     }
-
-    selectRenderedBlock(block, { extendRange: event.shiftKey });
   });
 
   elements.markdownBody.addEventListener('dblclick', (event) => {
