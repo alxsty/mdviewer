@@ -3,7 +3,8 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const SETTINGS_SCHEMA_VERSION = 3;
+const APP_VERSION = '2.0.0-alpha.7';
+const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
   theme: 'dark',
@@ -13,7 +14,9 @@ const DEFAULT_SETTINGS = Object.freeze({
   copyWithLineNumbers: false,
   settingsSchemaVersion: SETTINGS_SCHEMA_VERSION,
   sourcePanelOpen: false,
-  settingsPanelOpen: false
+  settingsPanelOpen: false,
+  searchCaseSensitive: false,
+  searchWholeWords: false
 });
 
 const FONT_FAMILIES = Object.freeze({
@@ -27,6 +30,9 @@ const VIRTUAL_LINE_HEIGHT_PX = 24.8;
 const VIRTUAL_OVERSCAN_LINES = 18;
 const MAX_TOAST_LENGTH = 160;
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
+const SEARCH_MIN_LENGTH = 3;
+const SEARCH_DEBOUNCE_MS = 150;
+const SEARCH_EXCLUDE_SELECTOR = '[data-search-exclude=\"true\"], .metadata-card';
 
 const elements = Object.freeze({
   appShell: document.querySelector('#app'),
@@ -38,7 +44,7 @@ const elements = Object.freeze({
   showLineNumbersToggle: document.querySelector('#showLineNumbersToggle'),
   linePanelToggle: document.querySelector('#linePanelToggle'),
   sourcePanel: document.querySelector('#sourcePanel'),
-  themeToggle: document.querySelector('#themeToggle'),
+  darkThemeInput: document.querySelector('#darkThemeInput'),
   settingsToggle: document.querySelector('#settingsToggle'),
   installButton: document.querySelector('#installButton'),
   fontFamilySelect: document.querySelector('#fontFamilySelect'),
@@ -56,7 +62,17 @@ const elements = Object.freeze({
   sourceItems: document.querySelector('#sourceItems'),
   scrollJumpControls: document.querySelector('#scrollJumpControls'),
   scrollTopButton: document.querySelector('#scrollTopButton'),
-  scrollBottomButton: document.querySelector('#scrollBottomButton')
+  scrollBottomButton: document.querySelector('#scrollBottomButton'),
+  appVersion: document.querySelector('#appVersion'),
+  searchControl: document.querySelector('#searchControl'),
+  searchToggle: document.querySelector('#searchToggle'),
+  searchPanel: document.querySelector('#searchPanel'),
+  searchInput: document.querySelector('#searchInput'),
+  searchCaseToggle: document.querySelector('#searchCaseToggle'),
+  searchWholeWordToggle: document.querySelector('#searchWholeWordToggle'),
+  searchPrevButton: document.querySelector('#searchPrevButton'),
+  searchNextButton: document.querySelector('#searchNextButton'),
+  searchCounter: document.querySelector('#searchCounter')
 });
 
 const state = {
@@ -73,7 +89,12 @@ const state = {
   updateReloadPending: false,
   headingObserver: null,
   activeHeadingSlug: '',
-  frontmatter: null
+  frontmatter: null,
+  searchOpen: false,
+  searchHits: [],
+  currentSearchIndex: -1,
+  searchDebounceTimer: null,
+  previousCurrentSearchHit: null
 };
 
 function loadSettings() {
@@ -163,8 +184,8 @@ function syncControlStates() {
   setPressedState(
     elements.linePanelToggle,
     sourcePanelOpen,
-    'Nascondi pannello righe',
-    'Mostra pannello righe'
+    'Nascondi sorgente',
+    'Mostra sorgente'
   );
 
   setPressedState(
@@ -181,14 +202,9 @@ function syncControlStates() {
     'Mostra numeri linea'
   );
 
-  setPressedState(
-    elements.themeToggle,
-    darkThemeActive,
-    'Tema dark attivo. Passa a tema chiaro',
-    'Tema chiaro attivo. Passa a tema dark',
-    '☾',
-    '☀'
-  );
+  if (elements.darkThemeInput) {
+    elements.darkThemeInput.checked = darkThemeActive;
+  }
 
   setPressedState(
     elements.settingsToggle,
@@ -252,6 +268,293 @@ function scrollMarkdownToEdge(edge) {
   window.setTimeout(updateScrollJumpControls, 220);
 }
 
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isWordChar(value) {
+  return Boolean(value) && /[\p{L}\p{N}_]/u.test(value);
+}
+
+function hasWordBoundaries(text, start, end) {
+  return !isWordChar(text[start - 1]) && !isWordChar(text[end]);
+}
+
+function getSearchQuery() {
+  return elements.searchInput.value.trim();
+}
+
+function setSearchPanelOpen(isOpen, options = {}) {
+  const { focusInput = false } = options;
+  state.searchOpen = Boolean(isOpen);
+  elements.searchControl.classList.toggle('open', state.searchOpen);
+  elements.searchPanel.setAttribute('aria-hidden', String(!state.searchOpen));
+
+  for (const control of elements.searchPanel.querySelectorAll('input, button')) {
+    control.tabIndex = state.searchOpen ? 0 : -1;
+  }
+
+  setPressedState(
+    elements.searchToggle,
+    state.searchOpen,
+    'Nascondi ricerca',
+    'Cerca nel documento'
+  );
+
+  if (state.searchOpen && focusInput) {
+    requestAnimationFrame(() => elements.searchInput.focus());
+  }
+}
+
+function closeSearchPanel(options = {}) {
+  const { clearQuery = true } = options;
+
+  setSearchPanelOpen(false);
+
+  if (clearQuery) {
+    elements.searchInput.value = '';
+  }
+
+  clearSearchHighlights();
+  updateSearchCounter();
+
+  const selection = window.getSelection?.();
+  if (selection && !selection.isCollapsed) {
+    selection.removeAllRanges();
+  }
+}
+
+function toggleSearchPanel() {
+  if (state.searchOpen) {
+    closeSearchPanel({ clearQuery: true });
+    return;
+  }
+
+  setSearchPanelOpen(true, { focusInput: true });
+}
+
+function updateSearchOptionButtons() {
+  setPressedState(
+    elements.searchCaseToggle,
+    Boolean(state.settings.searchCaseSensitive),
+    'Case sensitive attivo',
+    'Case sensitive non attivo'
+  );
+
+  setPressedState(
+    elements.searchWholeWordToggle,
+    Boolean(state.settings.searchWholeWords),
+    'Solo parole intere attivo',
+    'Solo parole intere non attivo'
+  );
+}
+
+function updateSearchCounter() {
+  const query = getSearchQuery();
+  const hasEnoughCharacters = query.length >= SEARCH_MIN_LENGTH;
+  const total = state.searchHits.length;
+  const hasHits = total > 0 && state.currentSearchIndex >= 0;
+
+  if (!query) {
+    elements.searchCounter.textContent = '';
+  } else if (!hasEnoughCharacters) {
+    elements.searchCounter.textContent = `min ${SEARCH_MIN_LENGTH}`;
+  } else if (!total) {
+    elements.searchCounter.textContent = '0/0';
+  } else {
+    elements.searchCounter.textContent = `${state.currentSearchIndex + 1}/${total}`;
+  }
+
+  elements.searchPrevButton.disabled = !hasHits;
+  elements.searchNextButton.disabled = !hasHits;
+}
+
+function clearSearchHighlights() {
+  if (state.searchDebounceTimer) {
+    window.clearTimeout(state.searchDebounceTimer);
+    state.searchDebounceTimer = null;
+  }
+
+  const marks = [...elements.markdownBody.querySelectorAll('mark.search-hit')];
+  for (const mark of marks) {
+    const parent = mark.parentNode;
+    if (!parent) {
+      continue;
+    }
+
+    while (mark.firstChild) {
+      parent.insertBefore(mark.firstChild, mark);
+    }
+
+    mark.remove();
+    parent.normalize();
+  }
+
+  state.searchHits = [];
+  state.currentSearchIndex = -1;
+  state.previousCurrentSearchHit = null;
+}
+
+function findTextMatches(text, query) {
+  const flags = state.settings.searchCaseSensitive ? 'gu' : 'giu';
+  const regex = new RegExp(escapeRegExp(query), flags);
+  const matches = [];
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    const start = match.index;
+    const end = start + match[0].length;
+
+    if (!state.settings.searchWholeWords || hasWordBoundaries(text, start, end)) {
+      matches.push({ start, end });
+    }
+
+    if (match[0].length === 0) {
+      regex.lastIndex += 1;
+    }
+  }
+
+  return matches;
+}
+
+function shouldSearchTextNode(node) {
+  if (!node.textContent || !node.textContent.trim()) {
+    return NodeFilter.FILTER_REJECT;
+  }
+
+  const parent = node.parentElement;
+  if (!parent || parent.closest(SEARCH_EXCLUDE_SELECTOR)) {
+    return NodeFilter.FILTER_REJECT;
+  }
+
+  if (parent.closest('script, style, noscript')) {
+    return NodeFilter.FILTER_REJECT;
+  }
+
+  return NodeFilter.FILTER_ACCEPT;
+}
+
+function collectSearchTextNodes() {
+  const walker = document.createTreeWalker(
+    elements.markdownBody,
+    NodeFilter.SHOW_TEXT,
+    { acceptNode: shouldSearchTextNode }
+  );
+
+  const nodes = [];
+  let node = walker.nextNode();
+  while (node) {
+    nodes.push(node);
+    node = walker.nextNode();
+  }
+
+  return nodes;
+}
+
+function wrapTextNodeMatches(node, matches) {
+  const text = node.textContent || '';
+  const fragment = document.createDocumentFragment();
+  let cursor = 0;
+  const wrappedMarks = [];
+
+  for (const match of matches) {
+    if (match.start > cursor) {
+      fragment.append(document.createTextNode(text.slice(cursor, match.start)));
+    }
+
+    const mark = document.createElement('mark');
+    mark.className = 'search-hit';
+    mark.textContent = text.slice(match.start, match.end);
+    fragment.append(mark);
+    wrappedMarks.push(mark);
+    cursor = match.end;
+  }
+
+  if (cursor < text.length) {
+    fragment.append(document.createTextNode(text.slice(cursor)));
+  }
+
+  node.replaceWith(fragment);
+  return wrappedMarks;
+}
+
+function applyCurrentSearchHit(options = {}) {
+  const { scroll = true } = options;
+
+  if (state.previousCurrentSearchHit) {
+    state.previousCurrentSearchHit.classList.remove('search-hit-current');
+  }
+
+  const currentHit = state.searchHits[state.currentSearchIndex] || null;
+  state.previousCurrentSearchHit = currentHit;
+
+  if (!currentHit) {
+    updateSearchCounter();
+    return;
+  }
+
+  currentHit.classList.add('search-hit-current');
+  updateSearchCounter();
+
+  if (scroll) {
+    currentHit.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  }
+}
+
+function runSearch(options = {}) {
+  const { scrollToFirst = true } = options;
+  const query = getSearchQuery();
+
+  clearSearchHighlights();
+
+  if (query.length < SEARCH_MIN_LENGTH) {
+    updateSearchCounter();
+    return;
+  }
+
+  const nodes = collectSearchTextNodes();
+  const hits = [];
+
+  for (const node of nodes) {
+    const matches = findTextMatches(node.textContent || '', query);
+    if (matches.length) {
+      hits.push(...wrapTextNodeMatches(node, matches));
+    }
+  }
+
+  state.searchHits = hits;
+  state.currentSearchIndex = hits.length ? 0 : -1;
+  state.previousCurrentSearchHit = null;
+  applyCurrentSearchHit({ scroll: scrollToFirst && Boolean(hits.length) });
+}
+
+function scheduleSearch() {
+  if (state.searchDebounceTimer) {
+    window.clearTimeout(state.searchDebounceTimer);
+  }
+
+  state.searchDebounceTimer = window.setTimeout(() => {
+    state.searchDebounceTimer = null;
+    runSearch({ scrollToFirst: true });
+  }, SEARCH_DEBOUNCE_MS);
+}
+
+function moveSearch(delta) {
+  if (!state.searchHits.length) {
+    updateSearchCounter();
+    return;
+  }
+
+  state.currentSearchIndex = (state.currentSearchIndex + delta + state.searchHits.length) % state.searchHits.length;
+  applyCurrentSearchHit({ scroll: true });
+}
+
+function resetSearchForNewDocument() {
+  clearSearchHighlights();
+  updateSearchCounter();
+}
+
 function applySettings() {
   document.documentElement.dataset.theme = state.settings.theme;
   document.body.classList.toggle('line-numbers', Boolean(state.settings.showLineNumbers));
@@ -262,6 +565,10 @@ function applySettings() {
   elements.fontSizeInput.value = String(state.settings.fontSize);
   elements.fontSizeOutput.textContent = `${state.settings.fontSize}px`;
   elements.copyWithLineNumbersInput.checked = Boolean(state.settings.copyWithLineNumbers);
+  elements.darkThemeInput.checked = state.settings.theme === 'dark';
+  elements.appVersion.textContent = `v${APP_VERSION}`;
+  updateSearchOptionButtons();
+  updateSearchCounter();
   elements.sourcePanel.hidden = !state.settings.sourcePanelOpen;
   elements.settingsbar.hidden = !state.settings.settingsPanelOpen;
   document.body.classList.toggle('settings-collapsed', !state.settings.settingsPanelOpen);
@@ -323,7 +630,7 @@ function onWorkerMessage(event) {
 
 function renderMarkdown(html, frontmatter = null) {
   const safeHtml = DOMPurify.sanitize(html, {
-    ADD_ATTR: ['target', 'rel', 'data-line-start', 'data-line-end', 'data-heading-level', 'tabindex', 'class', 'type', 'checked', 'disabled'],
+    ADD_ATTR: ['target', 'rel', 'data-line-start', 'data-line-end', 'data-heading-level', 'data-search-exclude', 'tabindex', 'class', 'type', 'checked', 'disabled'],
     ADD_TAGS: ['mark', 'input']
   });
 
@@ -337,6 +644,13 @@ function renderMarkdown(html, frontmatter = null) {
 
   elements.markdownBody.scrollTo({ top: 0 });
   requestAnimationFrame(updateScrollJumpControls);
+  requestAnimationFrame(() => {
+    if (getSearchQuery().length >= SEARCH_MIN_LENGTH) {
+      runSearch({ scrollToFirst: false });
+    } else {
+      resetSearchForNewDocument();
+    }
+  });
 }
 
 function createFrontmatterCard(frontmatter) {
@@ -346,6 +660,7 @@ function createFrontmatterCard(frontmatter) {
 
   const details = document.createElement('details');
   details.className = 'metadata-card';
+  details.setAttribute('data-search-exclude', 'true');
   details.setAttribute('data-line-start', String(frontmatter.lineStart || 1));
   details.setAttribute('data-line-end', String(frontmatter.lineEnd || frontmatter.lineStart || 1));
 
@@ -533,6 +848,7 @@ function loadMarkdownText(text, fileName = '') {
   state.sourceLines = splitMarkdownLines(text);
   state.selectedLineStart = 1;
   state.selectedLineEnd = Math.min(1, state.sourceLines.length);
+  resetSearchForNewDocument();
   elements.lineFromInput.max = String(state.sourceLines.length);
   elements.lineToInput.max = String(state.sourceLines.length);
   setSelectedLineRange(1, 1, { scrollSource: false, updateBlock: false });
@@ -833,8 +1149,8 @@ function bindEvents() {
     requestAnimationFrame(updateSourceVirtualList);
   });
 
-  elements.themeToggle.addEventListener('click', () => {
-    state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+  elements.darkThemeInput.addEventListener('change', () => {
+    state.settings.theme = elements.darkThemeInput.checked ? 'dark' : 'light';
     saveSettings();
     applySettings();
   });
@@ -844,6 +1160,44 @@ function bindEvents() {
     saveSettings();
     applySettings();
     requestAnimationFrame(updateSourceVirtualList);
+  });
+
+  elements.searchToggle.addEventListener('click', toggleSearchPanel);
+
+  elements.searchInput.addEventListener('input', scheduleSearch);
+
+  elements.searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      moveSearch(event.shiftKey ? -1 : 1);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSearchPanel({ clearQuery: true });
+    }
+  });
+
+  elements.searchCaseToggle.addEventListener('click', () => {
+    state.settings.searchCaseSensitive = !state.settings.searchCaseSensitive;
+    saveSettings();
+    updateSearchOptionButtons();
+    runSearch({ scrollToFirst: true });
+  });
+
+  elements.searchWholeWordToggle.addEventListener('click', () => {
+    state.settings.searchWholeWords = !state.settings.searchWholeWords;
+    saveSettings();
+    updateSearchOptionButtons();
+    runSearch({ scrollToFirst: true });
+  });
+
+  elements.searchPrevButton.addEventListener('click', () => moveSearch(-1));
+  elements.searchNextButton.addEventListener('click', () => moveSearch(1));
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && state.searchOpen) {
+      event.preventDefault();
+      closeSearchPanel({ clearQuery: true });
+    }
   });
 
   elements.fontFamilySelect.addEventListener('change', () => {
@@ -944,6 +1298,7 @@ function bindEvents() {
 
 function boot() {
   applySettings();
+  setSearchPanelOpen(false);
   bindEvents();
   bindInstallFlow();
   registerServiceWorker();

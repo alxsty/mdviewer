@@ -1,30 +1,36 @@
-# Markdown Viewer PWA — V2.0.0-alpha.2
+# Markdown Viewer PWA
 
-PWA installabile per visualizzare file Markdown locali in sola lettura.
+PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-## Funzioni incluse
+Versione corrente: **2.0.0-alpha.7**
+
+- Installazione / demo: <https://alxsty.github.io/mdviewer/>
+- Note di versione: [CHANGELOG.md](./CHANGELOG.md)
+
+## Funzioni principali
 
 - apertura file `.md` / `.markdown` da filesystem locale
-- render Markdown centrato nella pagina
+- render Markdown centrato in un box reader fisso con scroll interno
 - indice laterale generato dagli heading `h1` ... `h6`
-- frontmatter YAML iniziale renderizzato come card collassabile, escluso dall’indice heading
-- click sull'indice con scroll allo heading relativo
-- numeri di linea sorgente on/off sui blocchi renderizzati
-- pannello righe sorgente con virtualizzazione, adatto a file di qualche MB
+- frontmatter YAML iniziale renderizzato come card collassabile, escluso dall’indice e dalla ricerca
+- commenti HTML `<!-- ... -->` esclusi dal render Markdown, ma ancora visibili nel pannello sorgente
+- numeri di linea on/off sui blocchi renderizzati
+- pannello **Sorgente** con virtualizzazione, adatto a file Markdown di qualche MB
 - selezione intervallo righe e copia con/senza prefisso `[numero:]`
 - click su blocco renderizzato per selezionare le righe sorgente corrispondenti
 - doppio click su blocco renderizzato per copiare subito il blocco
 - tema chiaro/scuro
 - scelta font e dimensione
+- ricerca nel Markdown renderizzato con highlight, contatore `n/tot`, prev/next circolare, case sensitive e parole intere
+- pulsanti floating per andare all’inizio/fine del documento
 - service worker + manifest PWA
 - banner di aggiornamento app quando è disponibile una nuova versione
 - pulsante installazione nascosto quando l’app è già avviata come PWA
-- controlli circolari per pannelli, tema, numeri linea e impostazioni
 - drag & drop file Markdown
 
 ## Sintassi Markdown supportata
 
-La V1 usa `markdown-it` con:
+La PWA usa `markdown-it` con:
 
 - CommonMark di base
 - tabelle
@@ -53,13 +59,27 @@ Il blocco viene rimosso dal normale render Markdown e mostrato sopra al document
 
 Gli heading successivi non vengono sporcati dai metadati e i numeri di riga restano quelli originali del file, quindi il pannello sorgente continua a copiare/selezionare le righe reali.
 
+## Ricerca nel documento
+
+Il bottone di ricerca apre una toolbar compatta stile “find”:
+
+- ricerca attiva da almeno 3 caratteri
+- default case sensitive: off
+- default parole intere: off
+- contatore `n/tot`
+- prev/next circolare
+- highlight di tutte le occorrenze
+- evidenza più forte sull’occorrenza corrente
+
+La ricerca lavora solo nel Markdown renderizzato e ignora metadati, indice, sorgente raw, toolbar e numeri di riga.
+
 ## Performance su file da qualche MB
 
 Il parsing Markdown avviene in un Web Worker, quindi la UI principale rimane reattiva.
 
-Il pannello righe usa virtualizzazione: non crea un nodo DOM per ogni riga del file, ma solo le righe visibili.
+Il pannello sorgente usa virtualizzazione: non crea un nodo DOM per ogni riga del file, ma solo le righe visibili.
 
-Per evitare tempi folli sui file grandi, l'highlight automatico del codice viene disattivato quando il documento supera circa 1.5 MB o quando un singolo blocco codice supera circa 80 KB.
+Per evitare tempi eccessivi sui file grandi, l'highlight automatico del codice viene disattivato quando il documento supera circa 1.5 MB o quando un singolo blocco codice supera circa 80 KB.
 
 ## Avvio sviluppo
 
@@ -72,6 +92,12 @@ Apri:
 
 ```text
 http://localhost:5173
+```
+
+## Sviluppo in HTTPS locale
+
+```bash
+npm run dev:https
 ```
 
 ## Build produzione
@@ -97,91 +123,28 @@ La build GitHub Pages usa `base: /mdviewer/` e non genera file `.map` di produzi
 
 ## Installazione su Android
 
-Per vedere il prompt di installazione PWA, Android/Chrome richiede in pratica:
+Per installare la PWA su Android/Chrome apri:
 
-- pagina servita in HTTPS, oppure
-- `localhost` durante sviluppo
+<https://alxsty.github.io/mdviewer/>
 
-Quindi per test reale su smartphone conviene pubblicare `dist/` su un hosting HTTPS, per esempio GitHub Pages, Netlify, Cloudflare Pages, un reverse proxy Caddy/Nginx con certificato, ecc.
+Poi usa il prompt del browser oppure il menu Chrome:
+
+```text
+⋮ → Aggiungi a schermata Home / Installa app
+```
 
 ## Uso rapido
 
 1. Premi **Apri file**.
 2. Seleziona un file Markdown.
 3. Usa l'indice laterale per navigare gli heading.
-4. Attiva/disattiva **Numeri linea**.
-5. Apri il pannello sorgente con il bottone **</>** per selezionare/copiare righe sorgente.
-6. Attiva **Copia con numero** per ottenere righe nel formato:
-
-```text
-[12:]contenuto della riga
-```
-
-## Note V1
-
-- Il caricamento da URL è predisponibile come V2, ma non incluso nella V1.
-- Mermaid, KaTeX/MathJax, parsing YAML completo e persistenza dell'ultimo documento in IndexedDB sono buoni candidati per la V2.
-- La corrispondenza linea/blocco usa le mappe sorgente dei token Markdown. È molto utile per navigazione/copia, ma non pretende di mostrare un numero per ogni riga visuale dopo il word-wrap.
-
+4. Attiva/disattiva **123** per mostrare i numeri linea.
+5. Apri il pannello **Sorgente** con il bottone `</>` per selezionare/copiare righe sorgente.
+6. Apri la ricerca con il bottone lente.
+7. Usa i bottoni floating per andare all’inizio/fine documento.
 
 ## Aggiornamento della PWA installata
 
 Quando viene pubblicata una nuova build, il service worker la rileva e mostra un banner **Nuova versione disponibile**.
+
 Premendo **Aggiorna**, la PWA attiva il nuovo service worker e ricarica la pagina una sola volta.
-
-
-## V1.4
-
-Aggiornamenti UI:
-
-- pulsante Apri file allineato graficamente agli altri pulsanti circolari;
-- pulsante `#` come toggle stato per il pannello righe;
-- pulsante tema come toggle stato dark/light;
-- pulsante indice mobile come toggle stato show/hide;
-- rimosse le `X` interne dai pannelli laterali;
-- numeri di linea spostati in un pulsante circolare on/off nella barra superiore.
-
-
-
-
-## V2.0.0-alpha.2
-
-- Corretto il clipping della scrollbar interna del box Markdown: ora il contenuto scrolla dentro una shell arrotondata che nasconde gli estremi della scrollbar.
-
-## V1.5.4
-
-- Fix: rimossi i numeri riga duplicati nei blockquote.
-- Layout: scrollbar del box Markdown rientrata dentro il bordo arrotondato.
-- Layout: scrollbar dell’Indice accorciata sul fondo per evitare clipping sul bordo arrotondato.
-- UI: piccoli aggiustamenti allo stile scrollbar nei pannelli scrollabili.
-
-## V1.5.3
-
-- Il box del Markdown renderizzato resta fisso come Indice e Sorgente: il testo scorre internamente.
-- Rinominato il pannello righe in “Sorgente”.
-- Il badge righe del frontmatter compare solo con numeri di riga attivi ed è renderizzato come badge numerico.
-- Il controllo expand/collapse dei metadati usa un'icona SVG coerente con i pulsanti circolari.
-
-## V1.5.1
-
-- Fix: il toggle impostazioni non fa più collassare l’intera workspace.
-- Layout: griglia con aree esplicite per topbar, settings, workspace e statusbar.
-- Layout: pannello iniziale del Markdown alto come i pannelli laterali.
-- Layout: maggiore respiro tra settings bar e i tre pannelli principali.
-
-## V1.5
-
-Aggiornamenti UI:
-
-- pulsante **Copia** nel pannello righe trasformato in bottone circolare con icona standard;
-- bottone numeri linea aggiornato a **123**;
-- bottone pannello righe aggiornato con icona sorgente/codice;
-- nuovo bottone impostazioni con icona gear per mostrare/nascondere la barra font + copia con numero;
-- quando la barra impostazioni è nascosta, il layout recupera lo spazio verticale.
-
-
-## Novità V2.0 alpha 1
-
-- Aggiunti due pulsanti floating nel box Markdown per andare rapidamente all’inizio e alla fine del documento.
-- I pulsanti compaiono solo quando è caricato un documento scrollabile.
-- I pulsanti si disabilitano automaticamente quando il documento è già in cima o in fondo.

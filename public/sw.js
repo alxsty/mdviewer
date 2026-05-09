@@ -1,6 +1,5 @@
-const CACHE_VERSION = 'md-viewer-v2.0.0-alpha.2';
+const CACHE_VERSION = 'md-viewer-v2.0.0-alpha.7';
 const APP_SHELL = [
-  './',
   './index.html',
   './manifest.webmanifest',
   './icons/icon-192.svg',
@@ -9,14 +8,20 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_VERSION)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key !== CACHE_VERSION)
+          .map((key) => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
   );
 });
@@ -26,6 +31,38 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+async function networkFirstNavigation(request) {
+  const cache = await caches.open(CACHE_VERSION);
+
+  try {
+    const response = await fetch(request, { cache: 'no-store' });
+    if (response.ok) {
+      await cache.put('./index.html', response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cachedIndex = await cache.match('./index.html');
+    if (cachedIndex) {
+      return cachedIndex;
+    }
+    throw error;
+  }
+}
+
+async function cacheFirstAsset(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(CACHE_VERSION);
+    await cache.put(request, response.clone());
+  }
+  return response;
+}
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -41,26 +78,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
 
-      return fetch(request)
-        .then((response) => {
-          const responseClone = response.clone();
-          if (response.ok) {
-            caches.open(CACHE_VERSION).then((cache) => cache.put(request, responseClone));
-          }
-          return response;
-        })
-        .catch(() => {
-          if (request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-          return Response.error();
-        });
-    })
-  );
+  event.respondWith(cacheFirstAsset(request));
 });
