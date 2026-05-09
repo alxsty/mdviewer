@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1
+
+- Corretto il flusso di aggiornamento PWA: il nuovo service worker non si attiva più automaticamente prima del click su “Aggiorna”.
+- Il reload automatico dopo `controllerchange` avviene solo se l’utente ha confermato l’aggiornamento.
+- Rafforzata la prevenzione dello zoom pagina su tablet/smartphone con gesture/touch guard e `touch-action`.
+
 ## 2.0.0
 
 - Consolidata la linea V2 come release stabile.

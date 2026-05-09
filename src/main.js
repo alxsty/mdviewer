@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
@@ -87,6 +87,7 @@ const state = {
   selectedBlockElement: null,
   deferredInstallPrompt: null,
   updateReloadPending: false,
+  updateAccepted: false,
   headingObserver: null,
   activeHeadingSlug: '',
   frontmatter: null,
@@ -1020,6 +1021,7 @@ function createUpdateBanner(registration) {
 
   const button = banner.querySelector('button');
   button.addEventListener('click', () => {
+    state.updateAccepted = true;
     button.disabled = true;
     button.textContent = 'Aggiornamento…';
 
@@ -1053,7 +1055,7 @@ function watchServiceWorkerUpdates(registration) {
   });
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (state.updateReloadPending) {
+    if (!state.updateAccepted || state.updateReloadPending) {
       return;
     }
 
@@ -1130,14 +1132,47 @@ function bindInstallFlow() {
 
 
 function bindViewportZoomGuards() {
-  document.addEventListener('touchmove', (event) => {
+  let lastTouchEndAt = 0;
+
+  const preventMultiTouch = (event) => {
     if (event.touches && event.touches.length > 1) {
       event.preventDefault();
     }
-  }, { passive: false });
+  };
 
-  document.addEventListener('gesturestart', (event) => event.preventDefault());
-  document.addEventListener('gesturechange', (event) => event.preventDefault());
+  const preventGesture = (event) => {
+    event.preventDefault();
+  };
+
+  window.addEventListener('touchstart', preventMultiTouch, { capture: true, passive: false });
+  window.addEventListener('touchmove', preventMultiTouch, { capture: true, passive: false });
+  document.addEventListener('touchstart', preventMultiTouch, { capture: true, passive: false });
+  document.addEventListener('touchmove', preventMultiTouch, { capture: true, passive: false });
+
+  window.addEventListener('touchend', (event) => {
+    const now = Date.now();
+    if (now - lastTouchEndAt <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEndAt = now;
+  }, { capture: true, passive: false });
+
+  window.addEventListener('gesturestart', preventGesture, { capture: true, passive: false });
+  window.addEventListener('gesturechange', preventGesture, { capture: true, passive: false });
+  window.addEventListener('gestureend', preventGesture, { capture: true, passive: false });
+
+  window.addEventListener('wheel', (event) => {
+    if (event.ctrlKey) {
+      event.preventDefault();
+    }
+  }, { capture: true, passive: false });
+
+  window.addEventListener('keydown', (event) => {
+    const isZoomShortcut = (event.ctrlKey || event.metaKey) && ['+', '=', '-', '0'].includes(event.key);
+    if (isZoomShortcut) {
+      event.preventDefault();
+    }
+  }, { capture: true });
 }
 
 function bindEvents() {

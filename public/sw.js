@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'md-viewer-v2.0.0';
+const CACHE_VERSION = 'md-viewer-v2.0.1';
 const APP_SHELL = [
   './index.html',
   './manifest.webmanifest',
@@ -10,7 +10,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
       .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
   );
 });
 
