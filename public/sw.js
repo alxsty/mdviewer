@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'md-viewer-v2.0.0-alpha.7';
+const CACHE_VERSION = 'md-viewer-v2.0.0';
 const APP_SHELL = [
   './index.html',
   './manifest.webmanifest',

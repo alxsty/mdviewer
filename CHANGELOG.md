@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0
+
+- Consolidata la linea V2 come release stabile.
+- Corretto il formato copia righe con numero da `[nn:] <riga>` a `[nn]: <riga>`.
+- Disabilitato lo zoom pagina con pinch su tablet/smartphone per mantenere stabile il layout della PWA.
+- Aggiornati versione applicativa, service worker e documentazione.
+
 ## 2.0.0-alpha.7
 
 - Corretto il comportamento della ricerca quando viene chiusa: gli highlight vengono rimossi subito.

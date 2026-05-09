@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.0-alpha.7';
+const APP_VERSION = '2.0.0';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
@@ -931,7 +931,7 @@ function copySelectedRange() {
   const includeLineNumbers = Boolean(state.settings.copyWithLineNumbers);
   const content = state.sourceLines
     .slice(from - 1, to)
-    .map((line, index) => includeLineNumbers ? `[${from + index}:]${line}` : line)
+    .map((line, index) => includeLineNumbers ? `[${from + index}]: ${line}` : line)
     .join('\n');
 
   navigator.clipboard.writeText(content)
@@ -1128,6 +1128,18 @@ function bindInstallFlow() {
   });
 }
 
+
+function bindViewportZoomGuards() {
+  document.addEventListener('touchmove', (event) => {
+    if (event.touches && event.touches.length > 1) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', (event) => event.preventDefault());
+  document.addEventListener('gesturechange', (event) => event.preventDefault());
+}
+
 function bindEvents() {
   elements.fileInput.addEventListener('change', (event) => {
     openMarkdownFile(event.target.files?.[0]);
@@ -1300,6 +1312,7 @@ function boot() {
   applySettings();
   setSearchPanelOpen(false);
   bindEvents();
+  bindViewportZoomGuards();
   bindInstallFlow();
   registerServiceWorker();
   updateSourceVirtualList();

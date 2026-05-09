@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **2.0.0-alpha.7**
+Versione corrente: **2.0.0**
 
 - Installazione / demo: <https://alxsty.github.io/mdviewer/>
 - Note di versione: [CHANGELOG.md](./CHANGELOG.md)
@@ -16,7 +16,7 @@ Versione corrente: **2.0.0-alpha.7**
 - commenti HTML `<!-- ... -->` esclusi dal render Markdown, ma ancora visibili nel pannello sorgente
 - numeri di linea on/off sui blocchi renderizzati
 - pannello **Sorgente** con virtualizzazione, adatto a file Markdown di qualche MB
-- selezione intervallo righe e copia con/senza prefisso `[numero:]`
+- selezione intervallo righe e copia con/senza prefisso `[numero]: `
 - click su blocco renderizzato per selezionare le righe sorgente corrispondenti
 - doppio click su blocco renderizzato per copiare subito il blocco
 - tema chiaro/scuro
@@ -27,6 +27,7 @@ Versione corrente: **2.0.0-alpha.7**
 - banner di aggiornamento app quando è disponibile una nuova versione
 - pulsante installazione nascosto quando l’app è già avviata come PWA
 - drag & drop file Markdown
+- zoom pagina disabilitato su tablet/smartphone per mantenere stabile il layout PWA
 
 ## Sintassi Markdown supportata
 
