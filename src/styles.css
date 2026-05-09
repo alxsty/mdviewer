@@ -72,6 +72,11 @@ button {
 .app-shell {
   min-height: 100vh;
   display: grid;
+  grid-template-areas:
+    "topbar"
+    "settingsbar"
+    "workspace"
+    "statusbar";
   grid-template-rows: var(--topbar-height) var(--settingsbar-effective-height) minmax(0, 1fr) auto;
 }
 
@@ -88,6 +93,7 @@ body.settings-collapsed {
 }
 
 .topbar {
+  grid-area: topbar;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -139,6 +145,7 @@ body.settings-collapsed {
 }
 
 .settingsbar {
+  grid-area: settingsbar;
   position: sticky;
   top: var(--topbar-height);
   z-index: 25;
@@ -332,11 +339,12 @@ input[type="number"] {
 }
 
 .workspace {
+  grid-area: workspace;
   min-height: 0;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) minmax(320px, 28vw);
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.25rem;
+  padding: 1.25rem;
 }
 
 .toc-panel,
@@ -348,8 +356,8 @@ input[type="number"] {
 .toc-panel,
 .source-panel {
   position: sticky;
-  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1rem);
-  height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3rem);
+  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1.25rem);
+  height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
   overflow: hidden;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
@@ -454,7 +462,7 @@ input[type="number"] {
 
 .drop-zone {
   position: sticky;
-  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1rem);
+  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1.25rem);
   z-index: 10;
   margin: 0 auto 1rem;
   max-width: var(--reader-width);
@@ -489,7 +497,7 @@ input[type="number"] {
 }
 
 .markdown-body.empty-state {
-  min-height: 52vh;
+  min-height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
 }
 
 .markdown-body > :first-child {
@@ -506,7 +514,7 @@ input[type="number"] {
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  scroll-margin-top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1rem);
+  scroll-margin-top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1.25rem);
   line-height: 1.18;
   letter-spacing: -0.035em;
 }
@@ -889,6 +897,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .statusbar {
+  grid-area: statusbar;
   min-height: 2.25rem;
   display: flex;
   align-items: center;

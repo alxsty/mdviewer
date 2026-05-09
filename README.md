@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.5
+# Markdown Viewer PWA — V1.5.1
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 
@@ -141,6 +141,14 @@ Aggiornamenti UI:
 - rimosse le `X` interne dai pannelli laterali;
 - numeri di linea spostati in un pulsante circolare on/off nella barra superiore.
 
+
+
+## V1.5.1
+
+- Fix: il toggle impostazioni non fa più collassare l’intera workspace.
+- Layout: griglia con aree esplicite per topbar, settings, workspace e statusbar.
+- Layout: pannello iniziale del Markdown alto come i pannelli laterali.
+- Layout: maggiore respiro tra settings bar e i tre pannelli principali.
 
 ## V1.5
 
