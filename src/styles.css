@@ -252,12 +252,19 @@ input[type="number"] {
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
 }
 
-.file-button span,
 .primary-button {
   padding: 0 0.95rem;
   background: var(--accent-strong);
   color: white;
   border-color: rgba(255, 255, 255, 0.12);
+  font-weight: 700;
+}
+
+.file-button span {
+  padding: 0 0.95rem;
+  background: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--panel-border);
   font-weight: 700;
 }
 
@@ -288,6 +295,17 @@ input[type="number"] {
   width: 2.25rem;
   height: 2.25rem;
   font-weight: 800;
+}
+
+.icon-button.is-active {
+  border-color: rgba(56, 189, 248, 0.56);
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  color: #ffffff;
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12), 0 6px 18px rgba(14, 165, 233, 0.18);
+}
+
+.icon-button.is-active:hover {
+  border-color: rgba(255, 255, 255, 0.34);
 }
 
 .file-button:hover span,

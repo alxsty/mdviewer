@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.3
+# Markdown Viewer PWA — V1.4
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 
@@ -128,3 +128,15 @@ Quindi per test reale su smartphone conviene pubblicare `dist/` su un hosting HT
 
 Quando viene pubblicata una nuova build, il service worker la rileva e mostra un banner **Nuova versione disponibile**.
 Premendo **Aggiorna**, la PWA attiva il nuovo service worker e ricarica la pagina una sola volta.
+
+
+## V1.4
+
+Aggiornamenti UI:
+
+- pulsante Apri file allineato graficamente agli altri pulsanti circolari;
+- pulsante `#` come toggle stato per il pannello righe;
+- pulsante tema come toggle stato dark/light;
+- pulsante indice mobile come toggle stato show/hide;
+- rimosse le `X` interne dai pannelli laterali;
+- numeri di linea spostati in un pulsante circolare on/off nella barra superiore.

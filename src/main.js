@@ -30,18 +30,16 @@ const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
 const elements = Object.freeze({
   fileInput: document.querySelector('#fileInput'),
   tocToggle: document.querySelector('#tocToggle'),
-  tocClose: document.querySelector('#tocClose'),
   tocPanel: document.querySelector('#tocPanel'),
   tocList: document.querySelector('#tocList'),
+  showLineNumbersToggle: document.querySelector('#showLineNumbersToggle'),
   linePanelToggle: document.querySelector('#linePanelToggle'),
-  sourceClose: document.querySelector('#sourceClose'),
   sourcePanel: document.querySelector('#sourcePanel'),
   themeToggle: document.querySelector('#themeToggle'),
   installButton: document.querySelector('#installButton'),
   fontFamilySelect: document.querySelector('#fontFamilySelect'),
   fontSizeInput: document.querySelector('#fontSizeInput'),
   fontSizeOutput: document.querySelector('#fontSizeOutput'),
-  showLineNumbersInput: document.querySelector('#showLineNumbersInput'),
   copyWithLineNumbersInput: document.querySelector('#copyWithLineNumbersInput'),
   markdownBody: document.querySelector('#markdownBody'),
   dropZone: document.querySelector('#dropZone'),
@@ -133,6 +131,67 @@ function setStatus(message) {
     : text;
 }
 
+function setPressedState(button, isPressed, activeLabel, inactiveLabel, activeText, inactiveText) {
+  if (!button) {
+    return;
+  }
+
+  button.classList.toggle('is-active', Boolean(isPressed));
+  button.setAttribute('aria-pressed', String(Boolean(isPressed)));
+  button.setAttribute('aria-label', isPressed ? activeLabel : inactiveLabel);
+  button.title = isPressed ? activeLabel : inactiveLabel;
+
+  if (activeText && inactiveText) {
+    button.textContent = isPressed ? activeText : inactiveText;
+  }
+}
+
+function syncControlStates() {
+  const sourcePanelOpen = Boolean(state.settings.sourcePanelOpen);
+  const tocPanelOpen = elements.tocPanel.classList.contains('open');
+  const lineNumbersVisible = Boolean(state.settings.showLineNumbers);
+  const darkThemeActive = state.settings.theme === 'dark';
+
+  setPressedState(
+    elements.linePanelToggle,
+    sourcePanelOpen,
+    'Nascondi pannello righe',
+    'Mostra pannello righe'
+  );
+
+  setPressedState(
+    elements.tocToggle,
+    tocPanelOpen,
+    'Nascondi indice',
+    'Mostra indice'
+  );
+
+  setPressedState(
+    elements.showLineNumbersToggle,
+    lineNumbersVisible,
+    'Nascondi numeri linea',
+    'Mostra numeri linea'
+  );
+
+  setPressedState(
+    elements.themeToggle,
+    darkThemeActive,
+    'Tema dark attivo. Passa a tema chiaro',
+    'Tema chiaro attivo. Passa a tema dark',
+    '☾',
+    '☀'
+  );
+}
+
+function setTocPanelOpen(isOpen) {
+  elements.tocPanel.classList.toggle('open', Boolean(isOpen));
+  syncControlStates();
+}
+
+function toggleTocPanel() {
+  setTocPanelOpen(!elements.tocPanel.classList.contains('open'));
+}
+
 function applySettings() {
   document.documentElement.dataset.theme = state.settings.theme;
   document.body.classList.toggle('line-numbers', Boolean(state.settings.showLineNumbers));
@@ -142,9 +201,9 @@ function applySettings() {
   elements.fontFamilySelect.value = state.settings.fontFamily;
   elements.fontSizeInput.value = String(state.settings.fontSize);
   elements.fontSizeOutput.textContent = `${state.settings.fontSize}px`;
-  elements.showLineNumbersInput.checked = Boolean(state.settings.showLineNumbers);
   elements.copyWithLineNumbersInput.checked = Boolean(state.settings.copyWithLineNumbers);
   elements.sourcePanel.hidden = !state.settings.sourcePanelOpen;
+  syncControlStates();
 }
 
 function splitMarkdownLines(text) {
@@ -337,7 +396,7 @@ function scrollToHeading(slug) {
   history.replaceState(null, '', `#${encodeURIComponent(slug)}`);
 
   if (window.matchMedia('(max-width: 1180px)').matches) {
-    elements.tocPanel.classList.remove('open');
+    setTocPanelOpen(false);
   }
 }
 
@@ -686,20 +745,19 @@ function bindEvents() {
     event.target.value = '';
   });
 
-  elements.tocToggle.addEventListener('click', () => elements.tocPanel.classList.add('open'));
-  elements.tocClose.addEventListener('click', () => elements.tocPanel.classList.remove('open'));
+  elements.tocToggle.addEventListener('click', toggleTocPanel);
+
+  elements.showLineNumbersToggle.addEventListener('click', () => {
+    state.settings.showLineNumbers = !state.settings.showLineNumbers;
+    saveSettings();
+    applySettings();
+  });
 
   elements.linePanelToggle.addEventListener('click', () => {
-    state.settings.sourcePanelOpen = elements.sourcePanel.hidden;
+    state.settings.sourcePanelOpen = !state.settings.sourcePanelOpen;
     saveSettings();
     applySettings();
     requestAnimationFrame(updateSourceVirtualList);
-  });
-
-  elements.sourceClose.addEventListener('click', () => {
-    state.settings.sourcePanelOpen = false;
-    saveSettings();
-    applySettings();
   });
 
   elements.themeToggle.addEventListener('click', () => {
@@ -716,12 +774,6 @@ function bindEvents() {
 
   elements.fontSizeInput.addEventListener('input', () => {
     state.settings.fontSize = Number(elements.fontSizeInput.value);
-    saveSettings();
-    applySettings();
-  });
-
-  elements.showLineNumbersInput.addEventListener('change', () => {
-    state.settings.showLineNumbers = elements.showLineNumbersInput.checked;
     saveSettings();
     applySettings();
   });

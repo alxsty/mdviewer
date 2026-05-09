@@ -28,9 +28,10 @@
             </span>
           </label>
 
-          <button id="tocToggle" class="icon-button mobile-only" type="button" title="Indice" aria-label="Apri indice">☰</button>
-          <button id="linePanelToggle" class="icon-button" type="button" title="Pannello righe" aria-label="Mostra o nascondi pannello righe">#</button>
-          <button id="themeToggle" class="icon-button" type="button" title="Tema chiaro/scuro" aria-label="Cambia tema">◐</button>
+          <button id="tocToggle" class="icon-button mobile-only" type="button" title="Mostra indice" aria-label="Mostra indice" aria-pressed="false">☰</button>
+          <button id="showLineNumbersToggle" class="icon-button" type="button" title="Mostra numeri linea" aria-label="Mostra numeri linea" aria-pressed="false">№</button>
+          <button id="linePanelToggle" class="icon-button" type="button" title="Mostra pannello righe" aria-label="Mostra pannello righe" aria-pressed="false">#</button>
+          <button id="themeToggle" class="icon-button" type="button" title="Tema dark attivo" aria-label="Tema dark attivo" aria-pressed="true">☾</button>
           <button id="installButton" class="icon-button install-button" type="button" title="Installa app" aria-label="Installa app" hidden>
             <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
               <path d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Z"/>
@@ -58,12 +59,6 @@
         </label>
 
         <label class="switch-control">
-          <input id="showLineNumbersInput" type="checkbox" />
-          <span class="switch-track" aria-hidden="true"></span>
-          <span>Numeri linea</span>
-        </label>
-
-        <label class="switch-control">
           <input id="copyWithLineNumbersInput" type="checkbox" />
           <span class="switch-track" aria-hidden="true"></span>
           <span>Copia con numero</span>
@@ -74,7 +69,6 @@
         <aside id="tocPanel" class="toc-panel" aria-label="Indice degli heading">
           <div class="panel-header">
             <strong>Indice</strong>
-            <button id="tocClose" class="icon-button mobile-only" type="button" aria-label="Chiudi indice">×</button>
           </div>
           <nav id="tocList" class="toc-list">
             <p class="empty-panel">Apri un file Markdown per generare l’indice.</p>
@@ -97,7 +91,6 @@
         <aside id="sourcePanel" class="source-panel" aria-label="Pannello righe sorgente" hidden>
           <div class="panel-header">
             <strong>Righe</strong>
-            <button id="sourceClose" class="icon-button" type="button" aria-label="Chiudi pannello righe">×</button>
           </div>
 
           <div class="line-tools">
