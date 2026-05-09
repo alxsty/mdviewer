@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v2.0.1</span>
+          <span id="appVersion" class="brand-version">v2.0.2</span>
         </div>
 
         <div class="topbar-actions">
@@ -104,12 +104,6 @@
         </label>
 
         <label class="switch-control">
-          <input id="copyWithLineNumbersInput" type="checkbox" />
-          <span class="switch-track" aria-hidden="true"></span>
-          <span>Copia con numero</span>
-        </label>
-
-        <label class="switch-control">
           <input id="darkThemeInput" type="checkbox" />
           <span class="switch-track" aria-hidden="true"></span>
           <span>Tema scuro</span>
@@ -176,9 +170,15 @@
                 <path d="M4 10.75A2.75 2.75 0 0 1 6.75 8a.9.9 0 1 1 0 1.8c-.52 0-.95.43-.95.95v6.5c0 .52.43.95.95.95h6.5c.52 0 .95-.43.95-.95a.9.9 0 0 1 1.8 0A2.75 2.75 0 0 1 13.25 20h-6.5A2.75 2.75 0 0 1 4 17.25v-6.5Z"/>
               </svg>
             </button>
+
+            <label class="switch-control source-copy-option" title="Copia includendo il numero di riga">
+              <input id="copyWithLineNumbersInput" type="checkbox" />
+              <span class="switch-track" aria-hidden="true"></span>
+              <span>Copia con numero</span>
+            </label>
           </div>
 
-          <p class="small-note">Click su una riga per selezionarla. Shift+click per estendere l’intervallo. Click su un blocco renderizzato per agganciare le sue righe sorgente.</p>
+          <p class="small-note">Click su una riga o su un blocco renderizzato per agganciare le righe sorgente. Shift+click estende l’intervallo.</p>
 
           <div id="sourceViewport" class="source-viewport" tabindex="0" aria-label="Righe sorgente Markdown">
             <div id="sourceSpacer" class="source-spacer"></div>

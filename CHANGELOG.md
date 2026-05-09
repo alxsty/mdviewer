@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.2
+
+- Spostato lo switch **Copia con numero** dal pannello impostazioni al box **Sorgente**, accanto al bottone copia.
+- Aggiunto supporto a **Shift+click** nel Markdown renderizzato per estendere l’intervallo `Da` / `A` del sorgente.
+- Aggiornata la nota del pannello **Sorgente** per descrivere il comportamento click / Shift+click su righe e blocchi renderizzati.
+
 ## 2.0.1
 
 - Corretto il flusso di aggiornamento PWA: il nuovo service worker non si attiva più automaticamente prima del click su “Aggiorna”.

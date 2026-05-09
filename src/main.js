@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.0.2';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
@@ -962,8 +962,18 @@ function highlightRenderedBlockForRange(start, end) {
   }
 }
 
+function getRenderedBlockLineRange(block) {
+  const start = Number(block.getAttribute('data-line-start'));
+  const end = Number(block.getAttribute('data-line-end')) || start;
+
+  return {
+    start: Number.isFinite(start) ? start : 1,
+    end: Number.isFinite(end) ? end : start
+  };
+}
+
 function selectRenderedBlock(block, options = {}) {
-  const { updateRange = true } = options;
+  const { updateRange = true, extendRange = false } = options;
 
   if (state.selectedBlockElement) {
     state.selectedBlockElement.classList.remove('selected-source-block');
@@ -973,9 +983,15 @@ function selectRenderedBlock(block, options = {}) {
   state.selectedBlockElement.classList.add('selected-source-block');
 
   if (updateRange) {
-    const start = Number(block.getAttribute('data-line-start'));
-    const end = Number(block.getAttribute('data-line-end')) || start;
-    setSelectedLineRange(start, end, { scrollSource: true, updateBlock: false });
+    const range = getRenderedBlockLineRange(block);
+
+    if (extendRange) {
+      const targetLine = range.end >= state.selectedLineStart ? range.end : range.start;
+      setSelectedLineRange(state.selectedLineStart, targetLine, { scrollSource: true, updateBlock: false });
+      return;
+    }
+
+    setSelectedLineRange(range.start, range.end, { scrollSource: true, updateBlock: false });
   }
 }
 
@@ -1297,7 +1313,7 @@ function bindEvents() {
       return;
     }
 
-    selectRenderedBlock(block);
+    selectRenderedBlock(block, { extendRange: event.shiftKey });
   });
 
   elements.markdownBody.addEventListener('dblclick', (event) => {

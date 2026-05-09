@@ -1128,6 +1128,15 @@ body.line-numbers .markdown-body [data-line-start]::before {
   padding: 0;
 }
 
+.line-tools .source-copy-option {
+  margin-left: 0.15rem;
+  padding-left: 0.15rem;
+}
+
+.line-tools .source-copy-option span:last-child {
+  color: var(--muted);
+}
+
 .source-panel .small-note {
   padding: 0.65rem 0.75rem;
   border-bottom: 1px solid var(--panel-border);
