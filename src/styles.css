@@ -252,6 +252,12 @@ body.settings-collapsed {
   padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--panel-border);
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.settingsbar::-webkit-scrollbar {
+  display: none;
 }
 
 .settings-group {
@@ -801,8 +807,11 @@ input[type="number"] {
   border: 1px solid var(--panel-border);
   border-radius: calc(var(--radius) + 6px);
   background: var(--surface);
+  background-clip: padding-box;
   box-shadow: var(--shadow);
   overflow: hidden;
+  contain: paint;
+  clip-path: inset(0 round calc(var(--radius) + 6px));
 }
 
 .markdown-body {
@@ -813,7 +822,8 @@ input[type="number"] {
   padding: clamp(1.15rem, 3vw, 3rem);
   border: 0;
   border-radius: calc(var(--radius) + 2px);
-  background: transparent;
+  background: var(--surface);
+  background-clip: padding-box;
   color: var(--text);
   box-shadow: none;
   font-family: var(--reader-font-family);

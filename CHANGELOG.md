@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.7
+
+- Corretto un artefatto grafico nella barra impostazioni: nascosta la scrollbar/corner strip laterale quando la barra non necessita di scroll visibile.
+- Rafforzato il clipping del box Markdown renderizzato per impedire allo sfondo interno di oltrepassare i bordi arrotondati inferiori.
 
 ## 2.0.6
 
