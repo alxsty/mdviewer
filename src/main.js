@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const SETTINGS_SCHEMA_VERSION = 2;
+const SETTINGS_SCHEMA_VERSION = 3;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
   theme: 'dark',
@@ -12,7 +12,8 @@ const DEFAULT_SETTINGS = Object.freeze({
   showLineNumbers: false,
   copyWithLineNumbers: false,
   settingsSchemaVersion: SETTINGS_SCHEMA_VERSION,
-  sourcePanelOpen: false
+  sourcePanelOpen: false,
+  settingsPanelOpen: false
 });
 
 const FONT_FAMILIES = Object.freeze({
@@ -28,6 +29,8 @@ const MAX_TOAST_LENGTH = 160;
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
 
 const elements = Object.freeze({
+  appShell: document.querySelector('#app'),
+  settingsbar: document.querySelector('#settingsbar'),
   fileInput: document.querySelector('#fileInput'),
   tocToggle: document.querySelector('#tocToggle'),
   tocPanel: document.querySelector('#tocPanel'),
@@ -36,6 +39,7 @@ const elements = Object.freeze({
   linePanelToggle: document.querySelector('#linePanelToggle'),
   sourcePanel: document.querySelector('#sourcePanel'),
   themeToggle: document.querySelector('#themeToggle'),
+  settingsToggle: document.querySelector('#settingsToggle'),
   installButton: document.querySelector('#installButton'),
   fontFamilySelect: document.querySelector('#fontFamilySelect'),
   fontSizeInput: document.querySelector('#fontSizeInput'),
@@ -151,6 +155,7 @@ function syncControlStates() {
   const tocPanelOpen = elements.tocPanel.classList.contains('open');
   const lineNumbersVisible = Boolean(state.settings.showLineNumbers);
   const darkThemeActive = state.settings.theme === 'dark';
+  const settingsPanelOpen = Boolean(state.settings.settingsPanelOpen);
 
   setPressedState(
     elements.linePanelToggle,
@@ -181,6 +186,13 @@ function syncControlStates() {
     '☾',
     '☀'
   );
+
+  setPressedState(
+    elements.settingsToggle,
+    settingsPanelOpen,
+    'Nascondi impostazioni',
+    'Mostra impostazioni'
+  );
 }
 
 function setTocPanelOpen(isOpen) {
@@ -203,6 +215,8 @@ function applySettings() {
   elements.fontSizeOutput.textContent = `${state.settings.fontSize}px`;
   elements.copyWithLineNumbersInput.checked = Boolean(state.settings.copyWithLineNumbers);
   elements.sourcePanel.hidden = !state.settings.sourcePanelOpen;
+  elements.settingsbar.hidden = !state.settings.settingsPanelOpen;
+  document.body.classList.toggle('settings-collapsed', !state.settings.settingsPanelOpen);
   syncControlStates();
 }
 
@@ -764,6 +778,13 @@ function bindEvents() {
     state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
     saveSettings();
     applySettings();
+  });
+
+  elements.settingsToggle.addEventListener('click', () => {
+    state.settings.settingsPanelOpen = !state.settings.settingsPanelOpen;
+    saveSettings();
+    applySettings();
+    requestAnimationFrame(updateSourceVirtualList);
   });
 
   elements.fontFamilySelect.addEventListener('change', () => {

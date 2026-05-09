@@ -16,6 +16,7 @@
   --reader-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --topbar-height: 58px;
   --settingsbar-height: 54px;
+  --settingsbar-effective-height: var(--settingsbar-height);
   --radius: 18px;
   --line-number-width: 4.25rem;
 }
@@ -71,7 +72,11 @@ button {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-rows: var(--topbar-height) var(--settingsbar-height) minmax(0, 1fr) auto;
+  grid-template-rows: var(--topbar-height) var(--settingsbar-effective-height) minmax(0, 1fr) auto;
+}
+
+body.settings-collapsed {
+  --settingsbar-effective-height: 0px;
 }
 
 .topbar,
@@ -274,11 +279,21 @@ input[type="number"] {
   padding: 0;
 }
 
+.icon-svg,
 .icon-file-button svg,
 .install-button svg {
   width: 1.22rem;
   height: 1.22rem;
   fill: currentColor;
+}
+
+.numeric-icon-button {
+  font-size: 0.78rem;
+  letter-spacing: -0.08em;
+}
+
+.copy-range-button {
+  flex: 0 0 auto;
 }
 
 .ghost-button,
@@ -333,8 +348,8 @@ input[type="number"] {
 .toc-panel,
 .source-panel {
   position: sticky;
-  top: calc(var(--topbar-height) + var(--settingsbar-height) + 1rem);
-  height: calc(100vh - var(--topbar-height) - var(--settingsbar-height) - 3rem);
+  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1rem);
+  height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3rem);
   overflow: hidden;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
@@ -439,7 +454,7 @@ input[type="number"] {
 
 .drop-zone {
   position: sticky;
-  top: calc(var(--topbar-height) + var(--settingsbar-height) + 1rem);
+  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1rem);
   z-index: 10;
   margin: 0 auto 1rem;
   max-width: var(--reader-width);
@@ -491,7 +506,7 @@ input[type="number"] {
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  scroll-margin-top: calc(var(--topbar-height) + var(--settingsbar-height) + 1rem);
+  scroll-margin-top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1rem);
   line-height: 1.18;
   letter-spacing: -0.035em;
 }
@@ -764,10 +779,17 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .line-tools {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.75rem;
   border-bottom: 1px solid var(--panel-border);
+}
+
+.line-tools .copy-range-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
 }
 
 .source-panel .small-note {
@@ -892,7 +914,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
   .toc-panel {
     position: fixed;
-    inset: calc(var(--topbar-height) + var(--settingsbar-height)) auto 0 0;
+    inset: calc(var(--topbar-height) + var(--settingsbar-effective-height)) auto 0 0;
     z-index: 50;
     width: min(88vw, 340px);
     height: auto;

@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.4
+# Markdown Viewer PWA — V1.5
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 
@@ -19,7 +19,7 @@ PWA installabile per visualizzare file Markdown locali in sola lettura.
 - service worker + manifest PWA
 - banner di aggiornamento app quando è disponibile una nuova versione
 - pulsante installazione nascosto quando l’app è già avviata come PWA
-- controlli switch per numeri linea e copia con numero
+- controlli circolari per pannelli, tema, numeri linea e impostazioni
 - drag & drop file Markdown
 
 ## Sintassi Markdown supportata
@@ -110,7 +110,7 @@ Quindi per test reale su smartphone conviene pubblicare `dist/` su un hosting HT
 2. Seleziona un file Markdown.
 3. Usa l'indice laterale per navigare gli heading.
 4. Attiva/disattiva **Numeri linea**.
-5. Apri il pannello **#** per selezionare/copiare righe sorgente.
+5. Apri il pannello sorgente con il bottone **</>** per selezionare/copiare righe sorgente.
 6. Attiva **Copia con numero** per ottenere righe nel formato:
 
 ```text
@@ -140,3 +140,14 @@ Aggiornamenti UI:
 - pulsante indice mobile come toggle stato show/hide;
 - rimosse le `X` interne dai pannelli laterali;
 - numeri di linea spostati in un pulsante circolare on/off nella barra superiore.
+
+
+## V1.5
+
+Aggiornamenti UI:
+
+- pulsante **Copia** nel pannello righe trasformato in bottone circolare con icona standard;
+- bottone numeri linea aggiornato a **123**;
+- bottone pannello righe aggiornato con icona sorgente/codice;
+- nuovo bottone impostazioni con icona gear per mostrare/nascondere la barra font + copia con numero;
+- quando la barra impostazioni è nascosta, il layout recupera lo spazio verticale.
