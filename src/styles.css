@@ -18,7 +18,12 @@
   --settingsbar-height: 54px;
   --settingsbar-effective-height: var(--settingsbar-height);
   --radius: 18px;
-  --line-number-width: 4.25rem;
+  --line-number-width: 5rem;
+  --line-badge-height: 1.25rem;
+  --scrollbar-size: 10px;
+  --scrollbar-track: rgba(148, 163, 184, 0.08);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.35);
+  --scrollbar-thumb-hover: rgba(56, 189, 248, 0.65);
 }
 
 [data-theme="light"] {
@@ -33,6 +38,9 @@
   --accent: #0284c7;
   --accent-strong: #0369a1;
   --danger: #c2410c;
+  --scrollbar-track: rgba(15, 23, 42, 0.06);
+  --scrollbar-thumb: rgba(71, 85, 105, 0.32);
+  --scrollbar-thumb-hover: rgba(2, 132, 199, 0.62);
   --shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
 }
 
@@ -59,6 +67,60 @@ body {
     var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:where(.settingsbar, .toc-list, .markdown-body, .markdown-body pre, .markdown-body table, .markdown-body .metadata-raw, .source-viewport) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-gutter: stable;
+}
+
+:where(.settingsbar, .toc-list, .markdown-body, .markdown-body pre, .markdown-body table, .markdown-body .metadata-raw, .source-viewport)::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+:where(.settingsbar, .toc-list, .markdown-body, .markdown-body pre, .markdown-body table, .markdown-body .metadata-raw, .source-viewport)::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: var(--scrollbar-track);
+}
+
+:where(.settingsbar, .toc-list, .markdown-body, .markdown-body pre, .markdown-body table, .markdown-body .metadata-raw, .source-viewport)::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+:where(.settingsbar, .toc-list, .markdown-body, .markdown-body pre, .markdown-body table, .markdown-body .metadata-raw, .source-viewport)::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+:where(.settingsbar, .toc-list, .markdown-body, .markdown-body pre, .markdown-body table, .markdown-body .metadata-raw, .source-viewport)::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Keep WebKit scrollbars visually inside rounded panels. */
+.markdown-body::-webkit-scrollbar-track {
+  margin-top: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.toc-list::-webkit-scrollbar-track {
+  margin-top: 0.25rem;
+  margin-bottom: 0.85rem;
+}
+
+.source-viewport::-webkit-scrollbar-track {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.markdown-body pre::-webkit-scrollbar-track,
+.markdown-body table::-webkit-scrollbar-track,
+.markdown-body .metadata-raw::-webkit-scrollbar-track {
+  margin: 0.35rem;
 }
 
 button,
@@ -348,25 +410,35 @@ input[type="number"] {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) minmax(320px, 28vw);
   gap: 1.25rem;
-  padding: 1.25rem;
+  padding: 1.25rem 1.25rem 1.65rem;
+  overflow: hidden;
 }
 
 .toc-panel,
 .source-panel,
 .reader-area {
   min-height: 0;
+  height: 100%;
 }
 
 .toc-panel,
 .source-panel {
-  position: sticky;
-  top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1.25rem);
-  height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   background: var(--panel);
   box-shadow: var(--shadow);
+}
+
+.toc-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.source-panel {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
 .source-panel[hidden] {
@@ -388,8 +460,9 @@ input[type="number"] {
 }
 
 .toc-list {
-  height: calc(100% - 3rem);
+  min-height: 0;
   overflow: auto;
+  margin-bottom: 0.55rem;
   padding: 0.45rem 0.45rem 1.25rem;
   scroll-padding-block-end: 1.25rem;
 }
@@ -462,8 +535,6 @@ input[type="number"] {
 .reader-area {
   position: relative;
   min-width: 0;
-  height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
-  height: calc(100dvh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
   overflow: hidden;
 }
 
@@ -487,27 +558,41 @@ input[type="number"] {
   color: var(--muted);
 }
 
-.markdown-body {
+.markdown-shell {
   position: relative;
   max-width: var(--reader-width);
   height: 100%;
   margin: 0 auto;
-  padding: clamp(1.15rem, 3vw, 3rem);
+  padding: 0.28rem;
   border: 1px solid var(--panel-border);
   border-radius: calc(var(--radius) + 6px);
   background: var(--surface);
-  color: var(--text);
   box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.markdown-body {
+  position: relative;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: clamp(1.15rem, 3vw, 3rem);
+  border: 0;
+  border-radius: calc(var(--radius) + 2px);
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
   font-family: var(--reader-font-family);
   font-size: var(--reader-font-size);
   line-height: 1.72;
   overflow: auto;
   overflow-wrap: anywhere;
   scroll-behavior: smooth;
+  scroll-padding-block: 1rem;
 }
 
 body.line-numbers .markdown-body {
-  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width));
+  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width) + 0.35rem);
 }
 
 .markdown-body.empty-state {
@@ -704,14 +789,16 @@ body.line-numbers .markdown-body {
 .markdown-body .metadata-line-badge {
   display: none;
   width: max-content;
-  min-width: 2.65rem;
-  padding: 0.05rem 0.45rem;
+  min-width: 3.15rem;
+  height: var(--line-badge-height);
+  padding: 0 0.5rem;
+  border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 999px;
   background: rgba(56, 189, 248, 0.12);
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.7rem;
-  line-height: 1.35;
+  line-height: 1;
   text-align: center;
   white-space: nowrap;
 }
@@ -811,20 +898,32 @@ body.line-numbers .markdown-body .metadata-card::before {
   position: relative;
 }
 
+body.line-numbers .markdown-body blockquote [data-line-start]::before {
+  content: none;
+  display: none;
+}
+
 body.line-numbers .markdown-body [data-line-start]::before {
   content: attr(data-line-start);
   position: absolute;
-  left: calc(-1 * var(--line-number-width) + 0.35rem);
+  left: calc(-1 * var(--line-number-width) + 0.15rem);
   right: auto;
-  top: 0.15rem;
-  min-width: 2.65rem;
-  padding: 0.05rem 0.35rem;
+  top: 0.18rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.15rem;
+  height: var(--line-badge-height);
+  padding: 0 0.5rem;
+  border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 999px;
   background: rgba(56, 189, 248, 0.12);
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.7rem;
-  text-align: right;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
   pointer-events: none;
 }
 
@@ -856,7 +955,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .source-viewport {
   position: relative;
-  height: calc(100% - 3rem - 4.2rem - 5.2rem);
+  min-height: 0;
   overflow: auto;
   background: rgba(2, 6, 23, 0.28);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -872,15 +971,17 @@ body.line-numbers .markdown-body [data-line-start]::before {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
+  min-width: 100%;
 }
 
 .source-line {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
+  height: 1.55rem;
   min-height: 1.55rem;
   display: grid;
-  grid-template-columns: var(--line-number-width) minmax(0, 1fr);
-  align-items: start;
+  grid-template-columns: calc(var(--line-number-width) + 0.75rem) max-content;
+  align-items: center;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -896,19 +997,25 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .source-line .num {
-  display: block;
   position: sticky;
   left: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 1.55rem;
   color: var(--muted);
-  background: var(--surface-alt);
-  padding: 0 0.55rem;
+  background: linear-gradient(90deg, var(--surface-alt) 0%, var(--surface-alt) calc(100% - 0.5rem), transparent 100%);
+  padding: 0 0.85rem 0 0.45rem;
   text-align: right;
   user-select: none;
+  box-shadow: 1px 0 0 rgba(148, 163, 184, 0.12);
 }
 
 .source-line .txt {
+  min-width: max-content;
   white-space: pre;
-  padding: 0 0.65rem;
+  padding: 0 0.9rem 0 0.65rem;
 }
 
 .update-banner {
@@ -997,7 +1104,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
     display: inline-grid;
   }
 
-  body.line-numbers .markdown-body {
+  body.line-numbers .markdown-shell {
     margin-left: auto;
     margin-right: auto;
   }
@@ -1024,21 +1131,27 @@ body.line-numbers .markdown-body [data-line-start]::before {
   }
 
   .workspace {
-    padding: 0.65rem;
+    padding: 0.65rem 0.65rem 0.9rem;
+  }
+
+  .markdown-shell {
+    padding: 0.22rem;
+    border-radius: 1rem;
   }
 
   .markdown-body {
     padding: 1rem;
-    border-radius: 1rem;
+    border-radius: 0.78rem;
   }
 
   body.line-numbers .markdown-body {
-    padding-left: calc(1rem + var(--line-number-width));
+    padding-left: calc(1rem + var(--line-number-width) + 0.15rem);
   }
 
   body.line-numbers .markdown-body [data-line-start]::before {
-    left: calc(-1 * var(--line-number-width) + 0.35rem);
-    min-width: 2rem;
+    left: calc(-1 * var(--line-number-width) + 0.12rem);
+    min-width: 2.85rem;
+    height: 1.15rem;
     font-size: 0.62rem;
   }
 
