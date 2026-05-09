@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v2.0.4</span>
+          <span id="appVersion" class="brand-version">v2.0.5</span>
         </div>
 
         <div class="topbar-actions">
@@ -87,27 +87,27 @@
       </header>
 
       <div id="settingsbar" class="settingsbar" aria-label="Impostazioni visualizzazione" hidden>
-        <label>
-          <span>Font</span>
-          <select id="fontFamilySelect">
+        <div class="settings-group typography-settings" aria-label="Tipografia">
+          <span class="settings-glyph" title="Tipografia" aria-hidden="true">Tt</span>
+
+          <label class="visually-hidden" for="fontFamilySelect">Font</label>
+          <select id="fontFamilySelect" aria-label="Font">
             <option value="system">Sistema</option>
             <option value="serif">Serif</option>
             <option value="mono">Mono</option>
             <option value="opendyslexic">Dyslexic friendly</option>
           </select>
-        </label>
 
-        <label>
-          <span>Dimensione</span>
-          <input id="fontSizeInput" type="range" min="14" max="26" step="1" />
-          <output id="fontSizeOutput"></output>
-        </label>
+          <label class="visually-hidden" for="fontSizeInput">Dimensione testo</label>
+          <input id="fontSizeInput" type="range" min="14" max="26" step="1" aria-label="Dimensione testo" />
+          <output id="fontSizeOutput" aria-label="Dimensione corrente"></output>
+        </div>
 
-        <label class="switch-control">
-          <input id="darkThemeInput" type="checkbox" />
-          <span class="switch-track" aria-hidden="true"></span>
-          <span>Tema scuro</span>
-        </label>
+        <button id="themeToggle" class="icon-button theme-toggle-button" type="button" title="Passa al tema chiaro" aria-label="Passa al tema chiaro" aria-pressed="true">
+          <svg class="icon-svg theme-icon theme-icon-moon" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M20.15 15.32a.92.92 0 0 1 .22.96 8.9 8.9 0 0 1-8.32 5.72A9.05 9.05 0 0 1 3 12.95a8.9 8.9 0 0 1 5.72-8.32.92.92 0 0 1 1.18 1.1 7.1 7.1 0 0 0 8.37 8.37.92.92 0 0 1 .88.22ZM12.05 20.15a7.03 7.03 0 0 0 5.68-2.88 8.93 8.93 0 0 1-10.99-11 7.03 7.03 0 0 0-1.89 4.68 7.2 7.2 0 0 0 7.2 7.2Z"/>
+          </svg>
+        </button>
       </div>
 
       <main class="workspace">

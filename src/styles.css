@@ -53,6 +53,18 @@
   display: none !important;
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 html,
 body {
   height: 100%;
@@ -240,6 +252,48 @@ body.settings-collapsed {
   padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--panel-border);
   overflow-x: auto;
+}
+
+.settings-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.18rem 0.35rem 0.18rem 0.18rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.16);
+}
+
+[data-theme="light"] .settings-group {
+  background: rgba(15, 23, 42, 0.035);
+}
+
+.settings-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+}
+
+.typography-settings select {
+  max-width: 10rem;
+}
+
+.theme-toggle-button .theme-icon-sun {
+  transform: scale(1.04);
+}
+
+.theme-toggle-button .theme-icon-moon {
+  transform: scale(1.02);
 }
 
 .settingsbar label,
@@ -1426,6 +1480,18 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .scroll-jump-controls[hidden] {
   display: none !important;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .scroll-jump-button {

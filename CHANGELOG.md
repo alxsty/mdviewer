@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.5
+
+- Rifinita la barra impostazioni: rimosse le label testuali **Font**, **Dimensione** e **Tema scuro**.
+- Raggruppati font e dimensione testo in un unico gruppo **Tipografia** con glifo circolare `Tt`.
+- Trasformato il controllo tema in un bottone circolare con icona sole/luna coerente con lo stato del tema.
+- Aggiunti tooltip e label accessibili ai nuovi controlli grafici.
+
 ## 2.0.4
 
 - Sostituito lo switch testuale **Copia con numero** nel box **Sorgente** con un toggle circolare compatto `123`, accanto al bottone copia.
