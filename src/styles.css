@@ -46,7 +46,9 @@
 
 html,
 body {
+  height: 100%;
   min-height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -70,7 +72,9 @@ button {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   display: grid;
   grid-template-areas:
     "topbar"
@@ -458,6 +462,9 @@ input[type="number"] {
 .reader-area {
   position: relative;
   min-width: 0;
+  height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
+  height: calc(100dvh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
+  overflow: hidden;
 }
 
 .drop-zone {
@@ -483,7 +490,8 @@ input[type="number"] {
 .markdown-body {
   position: relative;
   max-width: var(--reader-width);
-  margin: 0 auto 2rem;
+  height: 100%;
+  margin: 0 auto;
   padding: clamp(1.15rem, 3vw, 3rem);
   border: 1px solid var(--panel-border);
   border-radius: calc(var(--radius) + 6px);
@@ -493,11 +501,17 @@ input[type="number"] {
   font-family: var(--reader-font-family);
   font-size: var(--reader-font-size);
   line-height: 1.72;
+  overflow: auto;
   overflow-wrap: anywhere;
+  scroll-behavior: smooth;
+}
+
+body.line-numbers .markdown-body {
+  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width));
 }
 
 .markdown-body.empty-state {
-  min-height: calc(100vh - var(--topbar-height) - var(--settingsbar-effective-height) - 3.5rem);
+  min-height: 100%;
 }
 
 .markdown-body > :first-child {
@@ -514,7 +528,7 @@ input[type="number"] {
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  scroll-margin-top: calc(var(--topbar-height) + var(--settingsbar-effective-height) + 1.25rem);
+  scroll-margin-top: 1rem;
   line-height: 1.18;
   letter-spacing: -0.035em;
 }
@@ -666,8 +680,7 @@ input[type="number"] {
   gap: 0.12rem;
 }
 
-.markdown-body .metadata-label,
-.markdown-body .metadata-summary small {
+.markdown-body .metadata-label {
   color: var(--muted);
   font-size: 0.78em;
   line-height: 1.2;
@@ -688,17 +701,52 @@ input[type="number"] {
   white-space: nowrap;
 }
 
+.markdown-body .metadata-line-badge {
+  display: none;
+  width: max-content;
+  min-width: 2.65rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: nowrap;
+}
+
+body.line-numbers .markdown-body .metadata-line-badge {
+  display: inline-grid;
+  place-items: center;
+}
+
+body.line-numbers .markdown-body .metadata-card::before {
+  content: none;
+}
+
 .markdown-body .metadata-chevron {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   flex: 0 0 auto;
   border: 1px solid var(--panel-border);
   border-radius: 999px;
-  color: var(--accent);
-  background: rgba(15, 23, 42, 0.12);
-  transition: transform 160ms ease;
+  color: var(--text);
+  background: transparent;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.markdown-body .metadata-chevron svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+.markdown-body .metadata-summary:hover .metadata-chevron {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.08);
 }
 
 .markdown-body .metadata-card[open] .metadata-chevron {
@@ -766,7 +814,8 @@ input[type="number"] {
 body.line-numbers .markdown-body [data-line-start]::before {
   content: attr(data-line-start);
   position: absolute;
-  right: calc(100% + 0.55rem);
+  left: calc(-1 * var(--line-number-width) + 0.35rem);
+  right: auto;
   top: 0.15rem;
   min-width: 2.65rem;
   padding: 0.05rem 0.35rem;
@@ -949,7 +998,8 @@ body.line-numbers .markdown-body [data-line-start]::before {
   }
 
   body.line-numbers .markdown-body {
-    margin-left: 2.6rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -982,8 +1032,12 @@ body.line-numbers .markdown-body [data-line-start]::before {
     border-radius: 1rem;
   }
 
+  body.line-numbers .markdown-body {
+    padding-left: calc(1rem + var(--line-number-width));
+  }
+
   body.line-numbers .markdown-body [data-line-start]::before {
-    right: calc(100% + 0.25rem);
+    left: calc(-1 * var(--line-number-width) + 0.35rem);
     min-width: 2rem;
     font-size: 0.62rem;
   }

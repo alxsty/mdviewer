@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.5.1
+# Markdown Viewer PWA — V1.5.2
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 
@@ -142,6 +142,14 @@ Aggiornamenti UI:
 - numeri di linea spostati in un pulsante circolare on/off nella barra superiore.
 
 
+
+
+## V1.5.2
+
+- Il box del Markdown renderizzato resta fisso come Indice e Sorgente: il testo scorre internamente.
+- Rinominato il pannello righe in “Sorgente”.
+- Il badge righe del frontmatter compare solo con numeri di riga attivi ed è renderizzato come badge numerico.
+- Il controllo expand/collapse dei metadati usa un'icona SVG coerente con i pulsanti circolari.
 
 ## V1.5.1
 

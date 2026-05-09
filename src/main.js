@@ -310,15 +310,21 @@ function createFrontmatterCard(frontmatter) {
   const title = document.createElement('strong');
   title.textContent = frontmatter.title || 'Frontmatter YAML';
 
-  const hint = document.createElement('small');
-  hint.textContent = `righe ${frontmatter.lineStart || 1}-${frontmatter.lineEnd || 1}`;
+  const hint = document.createElement('span');
+  hint.className = 'metadata-line-badge';
+  hint.textContent = `${frontmatter.lineStart || 1}-${frontmatter.lineEnd || 1}`;
+  hint.setAttribute('aria-label', `righe ${frontmatter.lineStart || 1}-${frontmatter.lineEnd || 1}`);
 
   summaryText.append(label, title, hint);
 
   const chevron = document.createElement('span');
   chevron.className = 'metadata-chevron';
   chevron.setAttribute('aria-hidden', 'true');
-  chevron.textContent = '⌄';
+  chevron.innerHTML = `
+    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+      <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/>
+    </svg>
+  `;
 
   summary.append(summaryText, chevron);
   details.append(summary);
@@ -442,8 +448,8 @@ function observeHeadings(tocItems) {
       item.classList.toggle('active', item.dataset.slug === state.activeHeadingSlug);
     }
   }, {
-    root: null,
-    rootMargin: '-22% 0px -70% 0px',
+    root: elements.markdownBody,
+    rootMargin: '-18% 0px -72% 0px',
     threshold: [0, 1]
   });
 
