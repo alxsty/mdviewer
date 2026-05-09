@@ -53,7 +53,10 @@ const elements = Object.freeze({
   copyRangeButton: document.querySelector('#copyRangeButton'),
   sourceViewport: document.querySelector('#sourceViewport'),
   sourceSpacer: document.querySelector('#sourceSpacer'),
-  sourceItems: document.querySelector('#sourceItems')
+  sourceItems: document.querySelector('#sourceItems'),
+  scrollJumpControls: document.querySelector('#scrollJumpControls'),
+  scrollTopButton: document.querySelector('#scrollTopButton'),
+  scrollBottomButton: document.querySelector('#scrollBottomButton')
 });
 
 const state = {
@@ -204,6 +207,51 @@ function toggleTocPanel() {
   setTocPanelOpen(!elements.tocPanel.classList.contains('open'));
 }
 
+function hasScrollableMarkdownDocument() {
+  if (!state.markdownText || elements.markdownBody.classList.contains('empty-state')) {
+    return false;
+  }
+
+  return elements.markdownBody.scrollHeight > elements.markdownBody.clientHeight + 8;
+}
+
+function updateScrollJumpControls() {
+  if (!elements.scrollJumpControls) {
+    return;
+  }
+
+  const canScroll = hasScrollableMarkdownDocument();
+  elements.scrollJumpControls.hidden = !canScroll;
+
+  if (!canScroll) {
+    elements.scrollTopButton.disabled = true;
+    elements.scrollBottomButton.disabled = true;
+    return;
+  }
+
+  const scrollTop = elements.markdownBody.scrollTop;
+  const maxScrollTop = Math.max(elements.markdownBody.scrollHeight - elements.markdownBody.clientHeight, 0);
+  const atTop = scrollTop <= 4;
+  const atBottom = scrollTop >= maxScrollTop - 4;
+
+  elements.scrollTopButton.disabled = atTop;
+  elements.scrollBottomButton.disabled = atBottom;
+}
+
+function scrollMarkdownToEdge(edge) {
+  if (!hasScrollableMarkdownDocument()) {
+    updateScrollJumpControls();
+    return;
+  }
+
+  const top = edge === 'bottom'
+    ? Math.max(elements.markdownBody.scrollHeight - elements.markdownBody.clientHeight, 0)
+    : 0;
+
+  elements.markdownBody.scrollTo({ top, behavior: 'smooth' });
+  window.setTimeout(updateScrollJumpControls, 220);
+}
+
 function applySettings() {
   document.documentElement.dataset.theme = state.settings.theme;
   document.body.classList.toggle('line-numbers', Boolean(state.settings.showLineNumbers));
@@ -218,6 +266,7 @@ function applySettings() {
   elements.settingsbar.hidden = !state.settings.settingsPanelOpen;
   document.body.classList.toggle('settings-collapsed', !state.settings.settingsPanelOpen);
   syncControlStates();
+  requestAnimationFrame(updateScrollJumpControls);
 }
 
 function splitMarkdownLines(text) {
@@ -285,6 +334,9 @@ function renderMarkdown(html, frontmatter = null) {
   if (metadataCard) {
     elements.markdownBody.prepend(metadataCard);
   }
+
+  elements.markdownBody.scrollTo({ top: 0 });
+  requestAnimationFrame(updateScrollJumpControls);
 }
 
 function createFrontmatterCard(frontmatter) {
@@ -485,6 +537,7 @@ function loadMarkdownText(text, fileName = '') {
   elements.lineToInput.max = String(state.sourceLines.length);
   setSelectedLineRange(1, 1, { scrollSource: false, updateBlock: false });
   updateSourceVirtualList();
+  updateScrollJumpControls();
   setStatus(`Parsing Markdown${fileName ? `: ${fileName}` : ''}…`);
   parseMarkdownAsync(text);
 }
@@ -856,6 +909,11 @@ function bindEvents() {
     copySelectedRange();
   });
 
+  elements.markdownBody.addEventListener('scroll', () => requestAnimationFrame(updateScrollJumpControls));
+
+  elements.scrollTopButton.addEventListener('click', () => scrollMarkdownToEdge('top'));
+  elements.scrollBottomButton.addEventListener('click', () => scrollMarkdownToEdge('bottom'));
+
   document.addEventListener('dragenter', (event) => {
     event.preventDefault();
     elements.dropZone.hidden = false;
@@ -878,7 +936,10 @@ function bindEvents() {
     openMarkdownFile(file);
   });
 
-  window.addEventListener('resize', () => requestAnimationFrame(updateSourceVirtualList));
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(updateSourceVirtualList);
+    requestAnimationFrame(updateScrollJumpControls);
+  });
 }
 
 function boot() {
@@ -887,6 +948,7 @@ function boot() {
   bindInstallFlow();
   registerServiceWorker();
   updateSourceVirtualList();
+  updateScrollJumpControls();
 }
 
 boot();

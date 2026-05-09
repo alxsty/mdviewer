@@ -34,6 +34,80 @@ const FRONTMATTER_ALT_END_DELIMITER = '...';
 const FRONTMATTER_COMMENT_PREFIX = '#';
 const FRONTMATTER_MAX_SUMMARY_VALUE_LENGTH = 220;
 
+
+const HTML_COMMENT_START = '<!--';
+const HTML_COMMENT_END = '-->';
+const FENCE_MARKER_PATTERN = /^ {0,3}(`{3,}|~{3,})/;
+
+const removeHtmlCommentsFromLine = (line, commentState) => {
+  let cursor = 0;
+  let output = '';
+  let insideComment = commentState.insideComment;
+
+  while (cursor < line.length) {
+    if (insideComment) {
+      const commentEndIndex = line.indexOf(HTML_COMMENT_END, cursor);
+
+      if (commentEndIndex < 0) {
+        cursor = line.length;
+      } else {
+        cursor = commentEndIndex + HTML_COMMENT_END.length;
+        insideComment = false;
+      }
+
+      continue;
+    }
+
+    const commentStartIndex = line.indexOf(HTML_COMMENT_START, cursor);
+
+    if (commentStartIndex < 0) {
+      output += line.slice(cursor);
+      cursor = line.length;
+    } else {
+      output += line.slice(cursor, commentStartIndex);
+      cursor = commentStartIndex + HTML_COMMENT_START.length;
+      insideComment = true;
+    }
+  }
+
+  commentState.insideComment = insideComment;
+  return output.trim() ? output : '';
+};
+
+const stripHtmlCommentsPreservingLines = (source) => {
+  const lines = splitSourceLines(source);
+  const commentState = { insideComment: false };
+  let fenceMarker = '';
+  let fenceLength = 0;
+
+  return lines
+    .map((line) => {
+      const fenceMatch = line.match(FENCE_MARKER_PATTERN);
+
+      if (fenceMatch) {
+        const marker = fenceMatch[1];
+        const markerChar = marker[0];
+
+        if (!commentState.insideComment) {
+          if (!fenceMarker) {
+            fenceMarker = markerChar;
+            fenceLength = marker.length;
+          } else if (markerChar === fenceMarker && marker.length >= fenceLength) {
+            fenceMarker = '';
+            fenceLength = 0;
+          }
+        }
+      }
+
+      if (fenceMarker) {
+        return line;
+      }
+
+      return removeHtmlCommentsFromLine(line, commentState);
+    })
+    .join('\n');
+};
+
 const splitSourceLines = (source) => source.split(/\r\n|\n|\r/);
 
 const stripBom = (value) => String(value || '').replace(/^\uFEFF/, '');
@@ -306,11 +380,12 @@ self.addEventListener('message', (event) => {
   try {
     const source = typeof markdown === 'string' ? markdown : '';
     const { renderSource, frontmatter } = extractFrontmatter(source);
+    const renderSourceWithoutComments = stripHtmlCommentsPreservingLines(renderSource);
     const env = {
       toc: [],
       disableHighlight: source.length > MAX_HIGHLIGHT_DOCUMENT_CHARS
     };
-    const html = md.render(renderSource, env);
+    const html = md.render(renderSourceWithoutComments, env);
     const elapsedMs = Math.round(performance.now() - startedAt);
 
     self.postMessage({

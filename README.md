@@ -1,4 +1,4 @@
-# Markdown Viewer PWA — V1.5.5
+# Markdown Viewer PWA — V2.0.0-alpha.2
 
 PWA installabile per visualizzare file Markdown locali in sola lettura.
 
@@ -144,7 +144,7 @@ Aggiornamenti UI:
 
 
 
-## V1.5.5
+## V2.0.0-alpha.2
 
 - Corretto il clipping della scrollbar interna del box Markdown: ora il contenuto scrolla dentro una shell arrotondata che nasconde gli estremi della scrollbar.
 
@@ -178,3 +178,10 @@ Aggiornamenti UI:
 - bottone pannello righe aggiornato con icona sorgente/codice;
 - nuovo bottone impostazioni con icona gear per mostrare/nascondere la barra font + copia con numero;
 - quando la barra impostazioni è nascosta, il layout recupera lo spazio verticale.
+
+
+## Novità V2.0 alpha 1
+
+- Aggiunti due pulsanti floating nel box Markdown per andare rapidamente all’inizio e alla fine del documento.
+- I pulsanti compaiono solo quando è caricato un documento scrollabile.
+- I pulsanti si disabilitano automaticamente quando il documento è già in cima o in fondo.

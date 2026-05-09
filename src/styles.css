@@ -1159,3 +1159,57 @@ body.line-numbers .markdown-body [data-line-start]::before {
     width: 7rem;
   }
 }
+
+.scroll-jump-controls {
+  position: absolute;
+  right: calc(var(--scrollbar-size) + 1rem);
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  pointer-events: none;
+}
+
+.scroll-jump-controls[hidden] {
+  display: none !important;
+}
+
+.scroll-jump-button {
+  pointer-events: auto;
+  width: 2.45rem;
+  height: 2.45rem;
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.58);
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+[data-theme="light"] .scroll-jump-button {
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.scroll-jump-button:disabled {
+  cursor: default;
+  opacity: 0.38;
+  transform: none;
+}
+
+.scroll-jump-button:disabled:hover {
+  border-color: rgba(148, 163, 184, 0.24);
+  transform: none;
+}
+
+@media (max-width: 720px) {
+  .scroll-jump-controls {
+    right: calc(var(--scrollbar-size) + 0.65rem);
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    gap: 0.45rem;
+  }
+
+  .scroll-jump-button {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+}

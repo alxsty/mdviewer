@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'md-viewer-v1.5.5';
+const CACHE_VERSION = 'md-viewer-v2.0.0-alpha.2';
 const APP_SHELL = [
   './',
   './index.html',

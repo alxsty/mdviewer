@@ -108,6 +108,21 @@
               <p>Apri un file <code>.md</code> dal dispositivo. L’app renderizza il documento in sola lettura, crea l’indice dagli heading e permette di copiare righe o blocchi dal sorgente.</p>
               <p class="hint">Per file da qualche MB il parsing viene eseguito in un Web Worker, così l’interfaccia rimane usabile.</p>
             </div>
+
+            <div id="scrollJumpControls" class="scroll-jump-controls" aria-label="Navigazione rapida documento" hidden>
+              <button id="scrollTopButton" class="icon-button scroll-jump-button" type="button" title="Vai all’inizio" aria-label="Vai all’inizio">
+                <svg class="icon-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5.75 5.6a.9.9 0 0 1 .9-.9h10.7a.9.9 0 1 1 0 1.8H6.65a.9.9 0 0 1-.9-.9Z"/>
+                  <path d="M12 8.15a1 1 0 0 1 .7.29l4 4a1 1 0 0 1-1.4 1.42L13 11.56v6.74a1 1 0 1 1-2 0v-6.74l-2.3 2.3a1 1 0 1 1-1.4-1.42l4-4a1 1 0 0 1 .7-.29Z"/>
+                </svg>
+              </button>
+              <button id="scrollBottomButton" class="icon-button scroll-jump-button" type="button" title="Vai alla fine" aria-label="Vai alla fine">
+                <svg class="icon-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5.75 18.4a.9.9 0 0 1 .9-.9h10.7a.9.9 0 1 1 0 1.8H6.65a.9.9 0 0 1-.9-.9Z"/>
+                  <path d="M12 4.7a1 1 0 0 1 1 1v6.74l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V5.7a1 1 0 0 1 1-1Z"/>
+                </svg>
+              </button>
+            </div>
           </article>
         </section>
 
