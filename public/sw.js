@@ -1,4 +1,5 @@
-const CACHE_VERSION = 'md-viewer-v2.0.5';
+const APP_VERSION = '2.0.6';
+const CACHE_VERSION = `md-viewer-v${APP_VERSION}`;
 const APP_SHELL = [
   './index.html',
   './manifest.webmanifest',
@@ -26,6 +27,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', (event) => {
+  if (event.data?.type === 'GET_VERSION') {
+    event.ports?.[0]?.postMessage({ type: 'VERSION', version: APP_VERSION });
+    return;
+  }
+
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }

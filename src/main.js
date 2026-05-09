@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.5';
+const APP_VERSION = '2.0.6';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
@@ -1162,6 +1162,29 @@ function updateInstallButtonVisibility() {
   elements.installButton.hidden = isStandaloneDisplayMode() || isAppInstalledKnown() || !state.deferredInstallPrompt;
 }
 
+function requestServiceWorkerVersion(worker) {
+  if (!worker) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    const timeout = window.setTimeout(() => resolve(null), 800);
+
+    channel.port1.onmessage = (event) => {
+      window.clearTimeout(timeout);
+      resolve(event.data?.version ?? null);
+    };
+
+    try {
+      worker.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+    } catch (error) {
+      window.clearTimeout(timeout);
+      resolve(null);
+    }
+  });
+}
+
 function createUpdateBanner(registration) {
   const existingBanner = document.querySelector('[data-update-banner="true"]');
   if (existingBanner) {
@@ -1194,10 +1217,25 @@ function createUpdateBanner(registration) {
   document.body.append(banner);
 }
 
-function watchServiceWorkerUpdates(registration) {
-  if (registration.waiting && navigator.serviceWorker.controller) {
-    createUpdateBanner(registration);
+async function handleWaitingServiceWorker(registration) {
+  if (!registration.waiting || !navigator.serviceWorker.controller) {
+    return;
   }
+
+  const waitingVersion = await requestServiceWorkerVersion(registration.waiting);
+
+  if (waitingVersion === APP_VERSION) {
+    // La UI caricata è già la stessa versione del service worker in waiting:
+    // allineiamo il SW in silenzio senza mostrare banner e senza reload.
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    return;
+  }
+
+  createUpdateBanner(registration);
+}
+
+function watchServiceWorkerUpdates(registration) {
+  handleWaitingServiceWorker(registration);
 
   registration.addEventListener('updatefound', () => {
     const newWorker = registration.installing;
@@ -1207,7 +1245,7 @@ function watchServiceWorkerUpdates(registration) {
 
     newWorker.addEventListener('statechange', () => {
       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-        createUpdateBanner(registration);
+        handleWaitingServiceWorker(registration);
       }
     });
   });

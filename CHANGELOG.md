@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 2.0.6
+
+- Corretto il comportamento del banner di aggiornamento PWA: se la UI caricata è già alla stessa versione del service worker in attesa, il service worker viene allineato in silenzio senza mostrare il banner e senza reload.
+- Aggiunto handshake di versione tra app e service worker.
+
 ## 2.0.5
 
 - Rifinita la barra impostazioni: rimosse le label testuali **Font**, **Dimensione** e **Tema scuro**.
