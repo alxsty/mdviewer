@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.3
+## 2.0.4
 
 - Sostituito lo switch testuale **Copia con numero** nel box **Sorgente** con un toggle circolare compatto `123`, accanto al bottone copia.
 - Aggiunto supporto touch per la selezione intervallo nel Markdown renderizzato: long press su un blocco per impostare l’ancora, poi tap su un altro blocco per estendere `Da` / `A`.

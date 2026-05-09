@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.3';
+const APP_VERSION = '2.0.4';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const DEFAULT_SETTINGS = Object.freeze({
@@ -898,8 +898,13 @@ function setSelectedLineRange(start, end, options = {}) {
 }
 
 function scrollSourceToLine(lineNumber) {
-  const top = Math.max(lineNumber - VIRTUAL_OVERSCAN_LINES, 0) * VIRTUAL_LINE_HEIGHT_PX;
-  elements.sourceViewport.scrollTo({ top, behavior: 'smooth' });
+  const exactTop = Math.max(clampLine(lineNumber) - 1, 0) * VIRTUAL_LINE_HEIGHT_PX;
+  const maxTop = Math.max(elements.sourceViewport.scrollHeight - elements.sourceViewport.clientHeight, 0);
+  const top = Math.min(exactTop, maxTop);
+
+  elements.sourceViewport.scrollTo({ top, behavior: 'auto' });
+  updateSourceVirtualList();
+  window.requestAnimationFrame(updateSourceVirtualList);
 }
 
 function updateSourceVirtualList() {
@@ -1424,7 +1429,10 @@ function bindEvents() {
   elements.markdownBody.addEventListener('pointerup', cancelTouchLongPressTimer);
   elements.markdownBody.addEventListener('pointercancel', cancelTouchLongPressTimer);
   elements.markdownBody.addEventListener('contextmenu', (event) => {
-    if (state.touchRangeMode || state.suppressNextMarkdownClick) {
+    const isRenderedBlock = Boolean(event.target.closest('[data-line-start][data-line-end]'));
+    const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+
+    if (state.touchRangeMode || state.suppressNextMarkdownClick || (isCoarsePointer && isRenderedBlock)) {
       event.preventDefault();
     }
   });
