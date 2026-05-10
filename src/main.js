@@ -3,9 +3,13 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '2.0.8';
+const APP_VERSION = '3.0.0-alpha.1';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
+const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
+const FILE_BINDING_DB_VERSION = 1;
+const FILE_BINDING_STORE_NAME = 'file-bindings';
+const LAST_FILE_BINDING_KEY = 'last-file';
 const DEFAULT_SETTINGS = Object.freeze({
   theme: 'dark',
   fontFamily: 'system',
@@ -40,6 +44,7 @@ const elements = Object.freeze({
   appShell: document.querySelector('#app'),
   settingsbar: document.querySelector('#settingsbar'),
   fileInput: document.querySelector('#fileInput'),
+  openFileButton: document.querySelector('#openFileButton'),
   tocToggle: document.querySelector('#tocToggle'),
   tocPanel: document.querySelector('#tocPanel'),
   tocList: document.querySelector('#tocList'),
@@ -104,8 +109,12 @@ const state = {
   touchPointerStartX: 0,
   touchPointerStartY: 0,
   touchLongPressBlock: null,
-  suppressNextMarkdownClick: false
+  suppressNextMarkdownClick: false,
+  fileBindingRestoreInProgress: false,
+  currentFileLinked: false
 };
+
+const INITIAL_MARKDOWN_BODY_HTML = elements.markdownBody.innerHTML;
 
 function loadSettings() {
   try {
@@ -620,6 +629,161 @@ function applySettings() {
   requestAnimationFrame(updateScrollJumpControls);
 }
 
+
+function isFileSystemAccessSupported() {
+  return window.isSecureContext
+    && 'showOpenFilePicker' in window
+    && 'indexedDB' in window;
+}
+
+function openFileBindingDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(FILE_BINDING_DB_NAME, FILE_BINDING_DB_VERSION);
+
+    request.addEventListener('upgradeneeded', () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(FILE_BINDING_STORE_NAME)) {
+        database.createObjectStore(FILE_BINDING_STORE_NAME, { keyPath: 'id' });
+      }
+    });
+
+    request.addEventListener('success', () => resolve(request.result));
+    request.addEventListener('error', () => reject(request.error || new Error('IndexedDB non disponibile.')));
+  });
+}
+
+async function withFileBindingStore(mode, callback) {
+  const database = await openFileBindingDatabase();
+
+  try {
+    return await new Promise((resolve, reject) => {
+      const transaction = database.transaction(FILE_BINDING_STORE_NAME, mode);
+      const store = transaction.objectStore(FILE_BINDING_STORE_NAME);
+      let callbackResult;
+
+      transaction.addEventListener('complete', () => resolve(callbackResult));
+      transaction.addEventListener('abort', () => reject(transaction.error || new Error('Transazione IndexedDB annullata.')));
+      transaction.addEventListener('error', () => reject(transaction.error || new Error('Errore IndexedDB.')));
+
+      try {
+        callbackResult = callback(store);
+      } catch (error) {
+        transaction.abort();
+        reject(error);
+      }
+    });
+  } finally {
+    database.close();
+  }
+}
+
+function getStoreRequestResult(request) {
+  return new Promise((resolve, reject) => {
+    request.addEventListener('success', () => resolve(request.result));
+    request.addEventListener('error', () => reject(request.error || new Error('Richiesta IndexedDB non riuscita.')));
+  });
+}
+
+async function getStoredFileBinding() {
+  if (!isFileSystemAccessSupported()) {
+    return null;
+  }
+
+  try {
+    return await withFileBindingStore('readonly', (store) => getStoreRequestResult(store.get(LAST_FILE_BINDING_KEY)));
+  } catch (_error) {
+    return null;
+  }
+}
+
+async function saveStoredFileBinding(handle, file) {
+  if (!isFileSystemAccessSupported() || !handle || !file) {
+    return false;
+  }
+
+  const record = {
+    id: LAST_FILE_BINDING_KEY,
+    handle,
+    name: file.name,
+    size: file.size,
+    lastModified: file.lastModified,
+    savedAt: Date.now()
+  };
+
+  try {
+    await withFileBindingStore('readwrite', (store) => getStoreRequestResult(store.put(record)));
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function clearStoredFileBinding() {
+  if (!('indexedDB' in window)) {
+    return;
+  }
+
+  try {
+    await withFileBindingStore('readwrite', (store) => getStoreRequestResult(store.delete(LAST_FILE_BINDING_KEY)));
+  } catch (_error) {
+    // Best effort: un errore nel reset del binding non deve bloccare l'app.
+  }
+}
+
+async function ensureFileReadPermission(handle) {
+  if (!handle) {
+    return 'denied';
+  }
+
+  if (typeof handle.queryPermission !== 'function') {
+    return 'granted';
+  }
+
+  let permission = await handle.queryPermission({ mode: 'read' });
+  if (permission === 'granted') {
+    return permission;
+  }
+
+  if (typeof handle.requestPermission === 'function') {
+    permission = await handle.requestPermission({ mode: 'read' });
+  }
+
+  return permission;
+}
+
+function resetDocumentToEmptyState() {
+  state.currentFileName = '';
+  state.markdownText = '';
+  state.sourceLines = [];
+  state.selectedLineStart = 1;
+  state.selectedLineEnd = 1;
+  state.selectedBlockElement = null;
+  state.frontmatter = null;
+  state.currentFileLinked = false;
+  clearTouchRangeMode();
+  resetSearchForNewDocument();
+
+  elements.markdownBody.classList.add('empty-state');
+  elements.markdownBody.innerHTML = INITIAL_MARKDOWN_BODY_HTML;
+  elements.markdownBody.scrollTo({ top: 0 });
+
+  elements.lineFromInput.value = '1';
+  elements.lineToInput.value = '1';
+  elements.lineFromInput.max = '1';
+  elements.lineToInput.max = '1';
+  elements.sourceSpacer.style.height = `${VIRTUAL_LINE_HEIGHT_PX}px`;
+  elements.sourceItems.textContent = '';
+  elements.tocList.innerHTML = '<p class="empty-panel">Apri un file Markdown per generare l’indice.</p>';
+
+  if (state.headingObserver) {
+    state.headingObserver.disconnect();
+    state.headingObserver = null;
+  }
+
+  updateSourceVirtualList();
+  updateScrollJumpControls();
+}
+
 function splitMarkdownLines(text) {
   if (!text) {
     return [''];
@@ -666,7 +830,7 @@ function onWorkerMessage(event) {
   observeHeadings(result.toc || []);
   updateSourceVirtualList();
 
-  const fileInfo = state.currentFileName ? `${state.currentFileName} · ` : '';
+  const fileInfo = state.currentFileName ? `${state.currentFileName}${state.currentFileLinked ? ' · collegato' : ''} · ` : '';
   const highlightInfo = result.stats?.highlightDisabled ? ' · highlight codice disattivato per performance' : '';
   const metadataInfo = state.frontmatter?.detected ? ' · metadati YAML' : '';
   setStatus(`${fileInfo}${state.sourceLines.length} righe · ${formatBytes(state.markdownText.length)} · render ${result.stats?.elapsedMs ?? '?'} ms${metadataInfo}${highlightInfo}`);
@@ -869,19 +1033,111 @@ function observeHeadings(tocItems) {
   }
 }
 
-async function openMarkdownFile(file) {
+async function openMarkdownFile(file, options = {}) {
   if (!file) {
     return;
   }
 
+  const { clearBinding = true, statusPrefix = 'Caricamento' } = options;
+
+  if (clearBinding) {
+    state.currentFileLinked = false;
+    void clearStoredFileBinding();
+  }
+
   state.currentFileName = file.name;
-  setStatus(`Caricamento ${file.name} (${formatBytes(file.size)})…`);
+  setStatus(`${statusPrefix} ${file.name} (${formatBytes(file.size)})…`);
 
   try {
     const text = await file.text();
     loadMarkdownText(text, file.name);
   } catch (error) {
     setStatus(`Impossibile leggere il file: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function openMarkdownFileFromHandle(handle, options = {}) {
+  const { saveBinding = false, statusPrefix = 'Caricamento' } = options;
+
+  const permission = await ensureFileReadPermission(handle);
+  if (permission !== 'granted') {
+    throw new Error('Permesso di lettura non concesso.');
+  }
+
+  const file = await handle.getFile();
+  state.currentFileLinked = true;
+
+  if (saveBinding) {
+    const saved = await saveStoredFileBinding(handle, file);
+    if (!saved) {
+      setStatus(`File caricato: ${file.name}. Collegamento non salvato da questo browser.`);
+    }
+  }
+
+  await openMarkdownFile(file, { clearBinding: false, statusPrefix });
+  return file;
+}
+
+async function openMarkdownFileWithSystemPicker() {
+  if (!isFileSystemAccessSupported()) {
+    elements.fileInput.click();
+    return;
+  }
+
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      excludeAcceptAllOption: false,
+      types: [
+        {
+          description: 'Markdown',
+          accept: {
+            'text/markdown': ['.md', '.markdown', '.mdown', '.mkd'],
+            'text/plain': ['.txt']
+          }
+        }
+      ]
+    });
+
+    const file = await openMarkdownFileFromHandle(handle, {
+      saveBinding: true,
+      statusPrefix: 'Caricamento'
+    });
+    setStatus(`File collegato: ${file.name}.`);
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      return;
+    }
+
+    setStatus(`Apertura file non riuscita: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function restoreLastLinkedFile() {
+  if (!isFileSystemAccessSupported()) {
+    return;
+  }
+
+  const storedBinding = await getStoredFileBinding();
+  if (!storedBinding?.handle) {
+    return;
+  }
+
+  state.fileBindingRestoreInProgress = true;
+  setStatus(`Controllo ultimo file collegato${storedBinding.name ? `: ${storedBinding.name}` : ''}…`);
+
+  try {
+    const file = await openMarkdownFileFromHandle(storedBinding.handle, {
+      saveBinding: true,
+      statusPrefix: 'Ripristino'
+    });
+    setStatus(`File collegato caricato dal dispositivo: ${file.name}.`);
+  } catch (_error) {
+    await clearStoredFileBinding();
+    resetDocumentToEmptyState();
+    setStatus('Il file originale non è più disponibile o il permesso è stato revocato. Ultimo file azzerato.');
+  } finally {
+    state.fileBindingRestoreInProgress = false;
   }
 }
 
@@ -1535,7 +1791,7 @@ function bindEvents() {
     event.preventDefault();
     elements.dropZone.hidden = true;
     const file = event.dataTransfer?.files?.[0];
-    openMarkdownFile(file);
+    openMarkdownFile(file, { clearBinding: true });
   });
 
   window.addEventListener('resize', () => {
@@ -1553,6 +1809,7 @@ function boot() {
   registerServiceWorker();
   updateSourceVirtualList();
   updateScrollJumpControls();
+  void restoreLastLinkedFile();
 }
 
 boot();

@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0-alpha.1
+
+- Aggiunto primo supporto “file collegato” tramite File System Access API, dove disponibile.
+- Il bottone **Apri file** usa `showOpenFilePicker()` sui browser compatibili.
+- Salvataggio del `FileSystemFileHandle` in IndexedDB per ricordare l’ultimo file originale.
+- Al refresh/riavvio la PWA prova a rileggere la versione corrente del file dal dispositivo.
+- Se il file originale non è più disponibile o il permesso è revocato, l’app azzera lo stato e mostra un messaggio.
+- Nessun restore automatico da copia cache: viene usato solo il file originale corrente.
+- Fallback invariato con `<input type="file">` quando la File System Access API non è disponibile.
+
 ## 2.0.8
 
 - Rifinito il box **Sorgente**: rimosse le label testuali `Da` / `A` dai campi intervallo.

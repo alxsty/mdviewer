@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **2.0.8**
+Versione corrente: **3.0.0-alpha.1**
 
 - Installazione / demo: <https://alxsty.github.io/mdviewer/>
 - Note di versione: [CHANGELOG.md](./CHANGELOG.md)
@@ -10,6 +10,8 @@ Versione corrente: **2.0.8**
 ## Funzioni principali
 
 - apertura file `.md` / `.markdown` da filesystem locale
+- collegamento all’ultimo file aperto tramite File System Access API, dove supportata
+- al refresh/riavvio rilegge la versione corrente del file originale; se non è più disponibile resetta lo stato e mostra un messaggio
 - render Markdown centrato in un box reader fisso con scroll interno
 - indice laterale generato dagli heading `h1` ... `h6`
 - frontmatter YAML iniziale renderizzato come card collassabile, escluso dall’indice e dalla ricerca
@@ -143,6 +145,18 @@ Poi usa il prompt del browser oppure il menu Chrome:
 5. Apri il pannello **Sorgente** con il bottone `</>` per selezionare/copiare righe sorgente.
 6. Apri la ricerca con il bottone lente.
 7. Usa i bottoni floating per andare all’inizio/fine documento.
+
+## File collegato — V3 alpha
+
+Dove il browser supporta la File System Access API, il bottone **Apri file** usa il file picker avanzato e salva in IndexedDB un riferimento al file originale.
+
+Al refresh o alla riapertura della PWA, l’app prova a rileggere il file originale dal dispositivo:
+
+- se il file è ancora disponibile e il permesso di lettura è valido, viene caricata la versione corrente del file;
+- se il file è stato spostato/cancellato o il permesso è stato revocato, l’app mostra un messaggio e torna allo stato “nessun file caricato”;
+- non viene ripristinata automaticamente una vecchia copia cache del contenuto.
+
+Nei browser senza File System Access API rimane disponibile il picker classico `<input type="file">`, ma dopo un refresh sarà necessario selezionare di nuovo il file.
 
 ## Aggiornamento della PWA installata
 
