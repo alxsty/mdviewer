@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.0.0-alpha.8</span>
+          <span id="appVersion" class="brand-version">v3.0.0-alpha.9</span>
         </div>
 
         <div class="topbar-actions">
@@ -140,6 +140,20 @@
                   <path d="M12 8.15a1 1 0 0 1 .7.29l4 4a1 1 0 0 1-1.4 1.42L13 11.56v6.74a1 1 0 1 1-2 0v-6.74l-2.3 2.3a1 1 0 1 1-1.4-1.42l4-4a1 1 0 0 1 .7-.29Z"/>
                 </svg>
               </button>
+
+              <div id="scrollLineGroup" class="scroll-line-group">
+                <div id="scrollLinePanel" class="scroll-line-panel" hidden>
+                  <input id="scrollLineInput" class="scroll-line-input" type="number" min="1" value="" inputmode="numeric" aria-label="Numero riga da raggiungere" placeholder="riga" />
+                  <button id="scrollLineClearButton" class="scroll-line-clear" type="button" title="Pulisci riga" aria-label="Pulisci riga">×</button>
+                </div>
+                <button id="scrollLineButton" class="icon-button scroll-jump-button" type="button" title="Vai alla riga" aria-label="Vai alla riga" aria-expanded="false">
+                  <svg class="icon-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M12 3.25a.9.9 0 0 1 .9.9v1.02a6.88 6.88 0 0 1 5.93 5.93h1.02a.9.9 0 1 1 0 1.8h-1.02a6.88 6.88 0 0 1-5.93 5.93v1.02a.9.9 0 1 1-1.8 0v-1.02a6.88 6.88 0 0 1-5.93-5.93H4.15a.9.9 0 1 1 0-1.8h1.02a6.88 6.88 0 0 1 5.93-5.93V4.15a.9.9 0 0 1 .9-.9Zm0 3.65a5.1 5.1 0 1 0 0 10.2 5.1 5.1 0 0 0 0-10.2Z"/>
+                    <path d="M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 1.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>
+                  </svg>
+                </button>
+              </div>
+
               <button id="scrollBottomButton" class="icon-button scroll-jump-button" type="button" title="Vai alla fine" aria-label="Vai alla fine">
                 <svg class="icon-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
                   <path d="M5.75 18.4a.9.9 0 0 1 .9-.9h10.7a.9.9 0 1 1 0 1.8H6.65a.9.9 0 0 1-.9-.9Z"/>
@@ -181,7 +195,7 @@
 
       <footer id="statusbar" class="statusbar" role="status">
         <span id="statusMessage" class="status-message">Pronto.</span>
-        <span id="statusFile" class="status-file" title="Nessun file caricato">Nessun file</span>
+        <span id="statusFile" class="status-file" role="button" tabindex="0" title="Nessun file caricato">Nessun file</span>
       </footer>
     </div>
 

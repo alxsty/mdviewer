@@ -3,8 +3,9 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.8';
+const APP_VERSION = '3.0.0-alpha.9';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
+const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -72,6 +73,11 @@ const elements = Object.freeze({
   sourceItems: document.querySelector('#sourceItems'),
   scrollJumpControls: document.querySelector('#scrollJumpControls'),
   scrollTopButton: document.querySelector('#scrollTopButton'),
+  scrollLineGroup: document.querySelector('#scrollLineGroup'),
+  scrollLinePanel: document.querySelector('#scrollLinePanel'),
+  scrollLineButton: document.querySelector('#scrollLineButton'),
+  scrollLineInput: document.querySelector('#scrollLineInput'),
+  scrollLineClearButton: document.querySelector('#scrollLineClearButton'),
   scrollBottomButton: document.querySelector('#scrollBottomButton'),
   appVersion: document.querySelector('#appVersion'),
   searchControl: document.querySelector('#searchControl'),
@@ -114,6 +120,8 @@ const state = {
   touchLongPressBlock: null,
   suppressNextMarkdownClick: false,
   fileBindingRestoreInProgress: false,
+  fileBindingCheckInProgress: false,
+  lastFileBindingCheckAt: 0,
   currentFileLinked: false,
   filePickerFallbackOpening: false,
   serviceWorkerRegistration: null,
@@ -375,6 +383,10 @@ function updateScrollJumpControls() {
   if (!canScroll) {
     elements.scrollTopButton.disabled = true;
     elements.scrollBottomButton.disabled = true;
+    if (elements.scrollLineButton) {
+      elements.scrollLineButton.disabled = true;
+    }
+    closeScrollLinePanel();
     return;
   }
 
@@ -385,6 +397,14 @@ function updateScrollJumpControls() {
 
   elements.scrollTopButton.disabled = atTop;
   elements.scrollBottomButton.disabled = atBottom;
+
+  if (elements.scrollLineButton) {
+    elements.scrollLineButton.disabled = !state.sourceLines.length;
+  }
+
+  if (elements.scrollLineInput) {
+    elements.scrollLineInput.max = String(Math.max(state.sourceLines.length, 1));
+  }
 }
 
 function scrollMarkdownToEdge(edge) {
@@ -399,6 +419,118 @@ function scrollMarkdownToEdge(edge) {
 
   elements.markdownBody.scrollTo({ top, behavior: 'smooth' });
   window.setTimeout(updateScrollJumpControls, 220);
+}
+
+function isScrollLinePanelOpen() {
+  return Boolean(elements.scrollLinePanel && !elements.scrollLinePanel.hidden);
+}
+
+function openScrollLinePanel() {
+  if (!state.sourceLines.length || !hasScrollableMarkdownDocument()) {
+    return;
+  }
+
+  elements.scrollLineInput.min = '1';
+  elements.scrollLineInput.max = String(state.sourceLines.length);
+  elements.scrollLineInput.value = '';
+  elements.scrollLinePanel.hidden = false;
+  elements.scrollLineGroup.classList.add('is-open');
+  elements.scrollLineButton.setAttribute('aria-expanded', 'true');
+
+  requestAnimationFrame(() => elements.scrollLineInput.focus());
+}
+
+function closeScrollLinePanel() {
+  if (!elements.scrollLinePanel) {
+    return;
+  }
+
+  elements.scrollLinePanel.hidden = true;
+  elements.scrollLineGroup?.classList.remove('is-open', 'is-invalid');
+  elements.scrollLineButton?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleScrollLinePanel() {
+  if (isScrollLinePanelOpen()) {
+    closeScrollLinePanel();
+    return;
+  }
+
+  openScrollLinePanel();
+}
+
+function clearScrollLineInput() {
+  elements.scrollLineInput.value = '';
+  elements.scrollLineGroup.classList.remove('is-invalid');
+  elements.scrollLineInput.focus();
+}
+
+function findRenderedBlockForLine(lineNumber) {
+  const targetLine = clampLine(lineNumber);
+  const candidates = [...elements.markdownBody.querySelectorAll('[data-line-start][data-line-end]')]
+    .map((element) => ({
+      element,
+      start: Number(element.getAttribute('data-line-start')),
+      end: Number(element.getAttribute('data-line-end')) || Number(element.getAttribute('data-line-start'))
+    }))
+    .filter((item) => Number.isFinite(item.start) && Number.isFinite(item.end));
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  const containing = candidates
+    .filter((item) => item.start <= targetLine && item.end >= targetLine)
+    .sort((a, b) => (a.end - a.start) - (b.end - b.start))[0];
+
+  if (containing) {
+    return containing.element;
+  }
+
+  const next = candidates
+    .filter((item) => item.start >= targetLine)
+    .sort((a, b) => a.start - b.start)[0];
+
+  if (next) {
+    return next.element;
+  }
+
+  return candidates.sort((a, b) => b.end - a.end)[0].element;
+}
+
+function scrollMarkdownToSourceLine(lineNumber) {
+  const normalizedLine = clampLine(lineNumber);
+  const targetBlock = findRenderedBlockForLine(normalizedLine);
+
+  if (!targetBlock) {
+    setStatus(`Riga ${normalizedLine} non trovata nel Markdown renderizzato.`);
+    return false;
+  }
+
+  selectRenderedBlock(targetBlock, { updateRange: true });
+  targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  window.setTimeout(updateScrollJumpControls, 220);
+  setStatus(`Raggiunta riga ${normalizedLine}.`);
+  return true;
+}
+
+function submitScrollLineInput() {
+  const rawValue = elements.scrollLineInput.value.trim();
+  const lineNumber = Number.parseInt(rawValue, 10);
+  const maxLine = Math.max(state.sourceLines.length, 1);
+  const valid = rawValue && Number.isInteger(lineNumber) && lineNumber >= 1 && lineNumber <= maxLine;
+
+  elements.scrollLineGroup.classList.toggle('is-invalid', !valid);
+
+  if (!valid) {
+    setStatus(`Inserisci una riga valida tra 1 e ${maxLine}.`);
+    elements.scrollLineInput.focus();
+    return;
+  }
+
+  if (scrollMarkdownToSourceLine(lineNumber)) {
+    closeScrollLinePanel();
+  }
 }
 
 
@@ -870,6 +1002,10 @@ function resetDocumentToEmptyState() {
   elements.lineToInput.value = '1';
   elements.lineFromInput.max = '1';
   elements.lineToInput.max = '1';
+  if (elements.scrollLineInput) {
+    elements.scrollLineInput.max = '1';
+    elements.scrollLineInput.value = '';
+  }
   elements.sourceSpacer.style.height = `${VIRTUAL_LINE_HEIGHT_PX}px`;
   elements.sourceItems.textContent = '';
   elements.tocList.innerHTML = '<p class="empty-panel">Apri un file Markdown per generare l’indice.</p>';
@@ -881,6 +1017,7 @@ function resetDocumentToEmptyState() {
   }
 
   updateSourceVirtualList();
+  closeScrollLinePanel();
   updateScrollJumpControls();
 }
 
@@ -1224,65 +1361,113 @@ async function openMarkdownFileWithSystemPicker() {
 }
 
 async function restoreLastLinkedFile(options = {}) {
-  const { requestPermission = false } = options;
+  const {
+    requestPermission = false,
+    force = false,
+    reason = 'startup',
+    showNoBindingMessage = false
+  } = options;
 
   if (!isFileSystemAccessSupported()) {
-    return;
+    return false;
   }
 
-  const storedBinding = await getStoredFileBinding();
-  if (!storedBinding?.handle) {
-    return;
+  if (state.fileBindingRestoreInProgress || state.fileBindingCheckInProgress) {
+    if (reason === 'manual') {
+      window.setTimeout(() => {
+        void restoreLastLinkedFile({ requestPermission, force: true, reason, showNoBindingMessage });
+      }, 250);
+    }
+    return false;
   }
 
-  state.fileBindingRestoreInProgress = true;
-  setStatus(`Controllo ultimo file collegato${storedBinding.name ? `: ${storedBinding.name}` : ''}…`);
+  const now = Date.now();
+  if (!force && now - state.lastFileBindingCheckAt < FILE_BINDING_CHECK_THROTTLE_MS) {
+    return false;
+  }
+
+  state.lastFileBindingCheckAt = now;
+  state.fileBindingCheckInProgress = true;
 
   try {
-    const file = await openMarkdownFileFromHandle(storedBinding.handle, {
-      saveBinding: true,
-      statusPrefix: 'Ripristino',
-      requestPermission
-    });
-    setStatus(`File collegato caricato dal dispositivo: ${file.name}.`);
-  } catch (error) {
-    resetDocumentToEmptyState();
+    const storedBinding = await getStoredFileBinding();
+    if (!storedBinding?.handle) {
+      if (showNoBindingMessage) {
+        setStatus('Nessun file collegato da verificare.');
+      }
+      return false;
+    }
 
-    if (isFileBindingPermissionError(error)) {
-      const message = 'Il file collegato richiede una nuova autorizzazione. Il collegamento è stato mantenuto.';
+    state.fileBindingRestoreInProgress = true;
+    const fileName = storedBinding.name ? `: ${storedBinding.name}` : '';
+    const checkVerb = reason === 'manual' ? 'Verifica file collegato' : 'Controllo file collegato';
+    setStatus(`${checkVerb}${fileName}…`);
+
+    try {
+      const file = await openMarkdownFileFromHandle(storedBinding.handle, {
+        saveBinding: true,
+        statusPrefix: reason === 'startup' ? 'Ripristino' : 'Aggiornamento file',
+        requestPermission
+      });
+      setStatus(`File collegato aggiornato dal dispositivo: ${file.name}.`);
+      return true;
+    } catch (error) {
+      if (isFileBindingPermissionError(error)) {
+        const message = 'Il file collegato richiede una nuova autorizzazione. Il collegamento è stato mantenuto.';
+        setStatus(message);
+        showToast(message, {
+          kind: 'info',
+          timeoutMs: 12000,
+          actionLabel: 'Autorizza',
+          onAction: () => {
+            void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual' });
+          }
+        });
+        return false;
+      }
+
+      if (isFileBindingMissingError(error)) {
+        await clearStoredFileBinding();
+        resetDocumentToEmptyState();
+        const message = 'Il file originale non è più disponibile. Ultimo file azzerato.';
+        setStatus(message);
+        showToast(message, { kind: 'info', timeoutMs: 7200 });
+        return false;
+      }
+
+      const message = 'Il file collegato non può essere verificato ora. Il collegamento è stato mantenuto.';
       setStatus(message);
       showToast(message, {
-        kind: 'warning',
+        kind: 'info',
         timeoutMs: 12000,
-        actionLabel: 'Autorizza',
+        actionLabel: 'Riprova',
         onAction: () => {
-          void restoreLastLinkedFile({ requestPermission: true });
+          void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual' });
         }
       });
-      return;
+      return false;
+    } finally {
+      state.fileBindingRestoreInProgress = false;
     }
-
-    if (isFileBindingMissingError(error)) {
-      await clearStoredFileBinding();
-      const message = 'Il file originale non è più disponibile. Ultimo file azzerato.';
-      setStatus(message);
-      showToast(message, { kind: 'warning', timeoutMs: 7200 });
-      return;
-    }
-
-    const message = 'Il file collegato non può essere ripristinato ora. Il collegamento è stato mantenuto.';
-    setStatus(message);
-    showToast(message, {
-      kind: 'warning',
-      timeoutMs: 12000,
-      actionLabel: 'Riprova',
-      onAction: () => {
-        void restoreLastLinkedFile({ requestPermission: true });
-      }
-    });
   } finally {
-    state.fileBindingRestoreInProgress = false;
+    state.fileBindingCheckInProgress = false;
   }
+}
+
+function scheduleFileBindingChecks() {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      void restoreLastLinkedFile({ reason: 'visible' });
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    void restoreLastLinkedFile({ reason: 'focus' });
+  });
+
+  window.addEventListener('online', () => {
+    void restoreLastLinkedFile({ reason: 'online' });
+  });
 }
 
 function loadMarkdownText(text, fileName = '') {
@@ -1296,6 +1481,9 @@ function loadMarkdownText(text, fileName = '') {
   resetSearchForNewDocument();
   elements.lineFromInput.max = String(state.sourceLines.length);
   elements.lineToInput.max = String(state.sourceLines.length);
+  if (elements.scrollLineInput) {
+    elements.scrollLineInput.max = String(Math.max(state.sourceLines.length, 1));
+  }
   setSelectedLineRange(1, 1, { scrollSource: false, updateBlock: false });
   updateSourceVirtualList();
   updateScrollJumpControls();
@@ -2008,7 +2196,32 @@ function bindEvents() {
   elements.markdownBody.addEventListener('scroll', () => requestAnimationFrame(updateScrollJumpControls));
 
   elements.scrollTopButton.addEventListener('click', () => scrollMarkdownToEdge('top'));
+  elements.scrollLineButton.addEventListener('click', toggleScrollLinePanel);
+  elements.scrollLineClearButton.addEventListener('click', clearScrollLineInput);
+  elements.scrollLineInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeScrollLinePanel();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      submitScrollLineInput();
+    }
+  });
+  elements.scrollLineInput.addEventListener('input', () => {
+    elements.scrollLineGroup.classList.remove('is-invalid');
+  });
   elements.scrollBottomButton.addEventListener('click', () => scrollMarkdownToEdge('bottom'));
+
+  elements.statusFile.addEventListener('click', () => {
+    void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual', showNoBindingMessage: true });
+  });
+
+  elements.statusFile.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual', showNoBindingMessage: true });
+    }
+  });
 
   document.addEventListener('dragenter', (event) => {
     event.preventDefault();
@@ -2045,6 +2258,7 @@ function boot() {
   bindViewportZoomGuards();
   bindInstallFlow();
   registerServiceWorker();
+  scheduleFileBindingChecks();
   updateSourceVirtualList();
   updateScrollJumpControls();
   void restoreLastLinkedFile();

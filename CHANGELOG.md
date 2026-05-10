@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0-alpha.9
+
+- Uniformato lo stile dei toast di file binding allo stile del banner update.
+- Aggiunto controllo del file collegato su avvio, ritorno visibile, focus, online e click sul nome file in statusbar.
+- Rimosso outline nativo anche dal pannello Sorgente.
+- Aggiunto comando floating “Vai alla riga” tra top e bottom.
+
 ## 3.0.0-alpha.8
 
 - Corretto glitch grafico del focus sul box Markdown: il reader mantiene il focus per le scorciatoie da tastiera, ma non mostra più il bordo bianco/outline nativo del browser.
