@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.8
+
+- Corretto glitch grafico del focus sul box Markdown: il reader mantiene il focus per le scorciatoie da tastiera, ma non mostra più il bordo bianco/outline nativo del browser.
+
 ## 3.0.0-alpha.7
 
 - Rimosso il controllo periodico ogni 60 secondi degli aggiornamenti PWA.

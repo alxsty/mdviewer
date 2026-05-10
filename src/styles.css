@@ -824,6 +824,17 @@ input[type="number"] {
   clip-path: inset(0 round calc(var(--radius) + 6px));
 }
 
+
+/* Keep the Markdown reader focus visually neutral.
+   The reader receives focus to enable keyboard shortcuts, but it should not
+   show the browser's default white focus ring on click/tap. */
+.markdown-shell:focus,
+.markdown-shell:focus-visible,
+.markdown-body:focus,
+.markdown-body:focus-visible {
+  outline: none;
+}
+
 .markdown-body {
   position: relative;
   max-width: none;
