@@ -1,9 +1,10 @@
-name: Deploy to GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
     branches:
       - main
+      - dev
 
   workflow_dispatch:
 
@@ -25,28 +26,51 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
+      - name: Checkout stable branch
         uses: actions/checkout@v6
+        with:
+          ref: main
+          path: stable-src
+
+      - name: Checkout dev branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          path: dev-src
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version: '24'
           cache: npm
+          cache-dependency-path: |
+            stable-src/package-lock.json
+            dev-src/package-lock.json
 
       - name: Show versions
         run: |
           node --version
           npm --version
 
-      - name: Clean npm cache
-        run: npm cache verify
+      - name: Build stable version
+        shell: bash
+        run: |
+          cd stable-src
+          npm ci --no-audit --no-fund
+          npm run build:pages
 
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+          mkdir -p ../site
+          cp -R dist/. ../site/
 
-      - name: Build GitHub Pages version
-        run: npm run build:pages
+      - name: Build dev version
+        shell: bash
+        run: |
+          cd dev-src
+          npm ci --no-audit --no-fund
+          npm run build:pages:dev
+
+          mkdir -p ../site/dev
+          cp -R dist/. ../site/dev/
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
@@ -54,7 +78,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./dist
+          path: ./site
 
       - name: Deploy to GitHub Pages
         id: deployment

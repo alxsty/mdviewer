@@ -2,20 +2,37 @@ import { defineConfig } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
 const GITHUB_PAGES_REPO = 'mdviewer';
+const DEV_PAGES_SEGMENT = 'dev';
+
+function resolveBase(mode) {
+  if (mode === 'github-pages-dev') {
+    return `/${GITHUB_PAGES_REPO}/${DEV_PAGES_SEGMENT}/`;
+  }
+
+  if (mode === 'github-pages') {
+    return `/${GITHUB_PAGES_REPO}/`;
+  }
+
+  return './';
+}
 
 export default defineConfig(({ mode }) => {
-  const isGitHubPagesBuild = mode === 'github-pages';
+  const isGitHubPagesBuild = mode === 'github-pages' || mode === 'github-pages-dev';
 
   return {
     /**
      * Locale/dev/preview:
      *   base: './'
      *
-     * GitHub Pages repo:
-     *   https://<utente>.github.io/mdviewer/
+     * GitHub Pages stable:
+     *   https://alxsty.github.io/mdviewer/
      *   base: '/mdviewer/'
+     *
+     * GitHub Pages dev/WIP:
+     *   https://alxsty.github.io/mdviewer/dev/
+     *   base: '/mdviewer/dev/'
      */
-    base: isGitHubPagesBuild ? `/${GITHUB_PAGES_REPO}/` : './',
+    base: resolveBase(mode),
 
     plugins: mode === 'https-dev' ? [basicSsl()] : [],
 

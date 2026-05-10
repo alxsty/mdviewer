@@ -9,7 +9,8 @@
     "dev:https": "vite --host 0.0.0.0 --mode https-dev",
     "build": "vite build",
     "build:pages": "vite build --mode github-pages",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "build:pages:dev": "vite build --mode github-pages-dev"
   },
   "dependencies": {
     "@vitejs/plugin-basic-ssl": "^1.2.0",

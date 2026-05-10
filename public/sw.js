@@ -37,6 +37,15 @@ self.addEventListener('message', (event) => {
   }
 });
 
+function shouldBypassNestedDevScope(requestUrl) {
+  const scopeUrl = new URL(self.registration.scope);
+  const stableScopePath = scopeUrl.pathname.endsWith('/') ? scopeUrl.pathname : `${scopeUrl.pathname}/`;
+  const devScopePath = `${stableScopePath}dev/`;
+  const isStableRootScope = stableScopePath.endsWith('/mdviewer/');
+
+  return isStableRootScope && requestUrl.pathname.startsWith(devScopePath);
+}
+
 async function networkFirstNavigation(request) {
   const cache = await caches.open(CACHE_VERSION);
 
@@ -80,6 +89,10 @@ self.addEventListener('fetch', (event) => {
   const isSameOrigin = requestUrl.origin === self.location.origin;
 
   if (!isSameOrigin) {
+    return;
+  }
+
+  if (shouldBypassNestedDevScope(requestUrl)) {
     return;
   }
 
