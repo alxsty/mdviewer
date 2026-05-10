@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.3';
+const APP_VERSION = '3.0.0-alpha.4';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -113,7 +113,8 @@ const state = {
   touchLongPressBlock: null,
   suppressNextMarkdownClick: false,
   fileBindingRestoreInProgress: false,
-  currentFileLinked: false
+  currentFileLinked: false,
+  filePickerFallbackOpening: false
 };
 
 const INITIAL_MARKDOWN_BODY_HTML = elements.markdownBody.innerHTML;
@@ -1178,7 +1179,15 @@ async function openMarkdownFileFromHandle(handle, options = {}) {
 
 async function openMarkdownFileWithSystemPicker() {
   if (!isFileSystemAccessSupported()) {
+    state.filePickerFallbackOpening = true;
     elements.fileInput.click();
+    window.setTimeout(() => {
+      state.filePickerFallbackOpening = false;
+    }, 0);
+    showToast('Questo browser non consente di ricollegare automaticamente il file dopo il riavvio. Uso apertura file classica.', {
+      kind: 'info',
+      timeoutMs: 6200
+    });
     return;
   }
 
@@ -1800,6 +1809,10 @@ function bindEvents() {
   elements.fileInput.addEventListener('change', (event) => {
     openMarkdownFile(event.target.files?.[0]);
     event.target.value = '';
+  });
+
+  elements.openFileButton.addEventListener('click', () => {
+    void openMarkdownFileWithSystemPicker();
   });
 
   elements.tocToggle.addEventListener('click', toggleTocPanel);

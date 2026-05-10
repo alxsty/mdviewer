@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0-alpha.3
+## 3.0.0-alpha.4
 
 - Corretto il ripristino del file collegato dopo un aggiornamento PWA: se il browser richiede di nuovo l'autorizzazione, il collegamento non viene più cancellato automaticamente.
 - Aggiunto toast con azione **Autorizza/Riprova** per rilanciare il ripristino del file collegato da un gesto utente.

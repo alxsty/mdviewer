@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.0.0-alpha.3</span>
+          <span id="appVersion" class="brand-version">v3.0.0-alpha.4</span>
         </div>
 
         <div class="topbar-actions">
@@ -37,15 +37,15 @@
             </div>
           </div>
 
-          <label id="openFileButton" class="file-button icon-file-button" title="Apri file" aria-label="Apri file Markdown" role="button" tabindex="0">
-            <input id="fileInput" type="file" accept=".md,.markdown,.mdown,.mkd,text/markdown,text/plain" />
+          <button id="openFileButton" class="file-button icon-file-button" type="button" title="Apri file" aria-label="Apri file Markdown">
             <span class="button-symbol" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false" role="img">
                 <path d="M4 6.75A2.75 2.75 0 0 1 6.75 4h3.17c.73 0 1.43.29 1.94.8l1.03 1.03c.23.23.55.37.88.37h3.48A2.75 2.75 0 0 1 20 8.95v8.3A2.75 2.75 0 0 1 17.25 20H6.75A2.75 2.75 0 0 1 4 17.25V6.75Zm2.75-.95c-.52 0-.95.43-.95.95v10.5c0 .52.43.95.95.95h10.5c.52 0 .95-.43.95-.95v-8.3c0-.52-.43-.95-.95-.95h-3.48c-.81 0-1.59-.32-2.16-.9l-1.03-1.03a.95.95 0 0 0-.67-.28H6.75Z"/>
                 <path d="M12 10.1a.9.9 0 0 1 .9.9v2.1H15a.9.9 0 1 1 0 1.8h-2.1V17a.9.9 0 1 1-1.8 0v-2.1H9a.9.9 0 1 1 0-1.8h2.1V11a.9.9 0 0 1 .9-.9Z"/>
               </svg>
             </span>
-          </label>
+          </button>
+          <input id="fileInput" class="visually-hidden" type="file" accept=".md,.markdown,.mdown,.mkd,text/markdown,text/plain" />
 
           <button id="showLineNumbersToggle" class="icon-button numeric-icon-button" type="button" title="Mostra numeri linea" aria-label="Mostra numeri linea" aria-pressed="false">123</button>
 

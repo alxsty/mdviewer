@@ -390,13 +390,23 @@ input[type="number"] {
   width: 5.5rem;
 }
 
-.file-button input {
+#fileInput {
   position: absolute;
   inline-size: 1px;
   block-size: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+.file-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  font: inherit;
 }
 
 .file-button span,
