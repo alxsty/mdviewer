@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.11
+
+- Corretto il layout del comando **Vai alla riga**: la X di pulizia non si sovrappone più agli spinner del campo numerico quando il campo riceve il focus.
+
 ## 3.0.0-alpha.10
 
 - Spostata la X di pulizia del comando **Vai alla riga** dentro il campo numerico.

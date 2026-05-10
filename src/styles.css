@@ -1805,9 +1805,9 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .scroll-line-input {
-  width: 5.75rem;
+  width: 6.8rem;
   height: 1.95rem;
-  padding: 0 1.8rem 0 0.7rem;
+  padding: 0 3.1rem 0 0.7rem;
   border: 1px solid var(--panel-border);
   border-radius: 999px;
   background: rgba(2, 6, 23, 0.2);
@@ -1830,7 +1830,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .scroll-line-clear {
   position: absolute;
-  right: 0.28rem;
+  right: 0.38rem;
   top: 50%;
   display: grid;
   place-items: center;
@@ -1863,12 +1863,24 @@ body.line-numbers .markdown-body [data-line-start]::before {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
 }
 
+.scroll-line-input::-webkit-outer-spin-button,
+.scroll-line-input::-webkit-inner-spin-button {
+  margin-right: 1.65rem;
+  opacity: 0.72;
+}
+
 @media (max-width: 720px) {
   .scroll-line-panel {
     right: calc(100% + 0.45rem);
   }
 
   .scroll-line-input {
-    width: 5.35rem;
+    width: 6.25rem;
+    padding-right: 2.95rem;
+  }
+
+  .scroll-line-input::-webkit-outer-spin-button,
+  .scroll-line-input::-webkit-inner-spin-button {
+    margin-right: 1.55rem;
   }
 }
