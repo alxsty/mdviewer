@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0-alpha.7
+
+- Rimosso il controllo periodico ogni 60 secondi degli aggiornamenti PWA.
+- Mantenuti i controlli update su avvio, ritorno in visibilità, focus finestra e ritorno online.
+- Nessuna modifica alla logica di file binding.
+
+## 3.0.0-alpha.6
+
+- Aggiunto controllo periodico degli aggiornamenti del service worker mentre la PWA resta aperta.
+- Aggiunto controllo update al ritorno in foreground, al focus della finestra e al ritorno online.
+- Pulito il pacchetto sorgente: esclusi `node_modules/` e `dist/` dallo zip distribuito.
+
 ## 3.0.0-alpha.5
 
 - Sostituita la dicitura testuale `collegato` nella statusbar con una icona link compatta accanto al nome file.

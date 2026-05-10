@@ -3,7 +3,8 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.5';
+const APP_VERSION = '3.0.0-alpha.7';
+const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -114,7 +115,10 @@ const state = {
   suppressNextMarkdownClick: false,
   fileBindingRestoreInProgress: false,
   currentFileLinked: false,
-  filePickerFallbackOpening: false
+  filePickerFallbackOpening: false,
+  serviceWorkerRegistration: null,
+  serviceWorkerUpdateCheckInProgress: false,
+  lastServiceWorkerUpdateCheckAt: 0
 };
 
 const INITIAL_MARKDOWN_BODY_HTML = elements.markdownBody.innerHTML;
@@ -1631,8 +1635,58 @@ async function handleWaitingServiceWorker(registration) {
   createUpdateBanner(registration);
 }
 
+async function checkForServiceWorkerUpdate(registration, { force = false } = {}) {
+  if (!registration || state.serviceWorkerUpdateCheckInProgress) {
+    return;
+  }
+
+  if (registration.waiting) {
+    await handleWaitingServiceWorker(registration);
+    return;
+  }
+
+  const now = Date.now();
+  if (!force && now - state.lastServiceWorkerUpdateCheckAt < SERVICE_WORKER_UPDATE_THROTTLE_MS) {
+    return;
+  }
+
+  state.lastServiceWorkerUpdateCheckAt = now;
+  state.serviceWorkerUpdateCheckInProgress = true;
+
+  try {
+    await registration.update();
+
+    if (registration.waiting) {
+      await handleWaitingServiceWorker(registration);
+    }
+  } catch (_error) {
+    // Update check best-effort: non disturbiamo la lettura se la rete è assente.
+  } finally {
+    state.serviceWorkerUpdateCheckInProgress = false;
+  }
+}
+
+function scheduleServiceWorkerUpdateChecks(registration) {
+  state.serviceWorkerRegistration = registration;
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkForServiceWorkerUpdate(registration, { force: true });
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    checkForServiceWorkerUpdate(registration, { force: true });
+  });
+
+  window.addEventListener('online', () => {
+    checkForServiceWorkerUpdate(registration, { force: true });
+  });
+}
+
 function watchServiceWorkerUpdates(registration) {
   handleWaitingServiceWorker(registration);
+  scheduleServiceWorkerUpdateChecks(registration);
 
   registration.addEventListener('updatefound', () => {
     const newWorker = registration.installing;
@@ -1669,7 +1723,7 @@ function registerServiceWorker() {
       });
 
       watchServiceWorkerUpdates(registration);
-      registration.update().catch(() => undefined);
+      checkForServiceWorkerUpdate(registration, { force: true });
     } catch (error) {
       setStatus(`Service worker non registrato: ${error instanceof Error ? error.message : String(error)}`);
     }
