@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.4';
+const APP_VERSION = '3.0.0-alpha.5';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -246,8 +246,7 @@ function updateFileStatus() {
     return;
   }
 
-  const linkedSuffix = state.currentFileLinked ? ' · collegato' : '';
-  elements.statusFile.textContent = `${state.currentFileName}${linkedSuffix}`;
+  elements.statusFile.textContent = state.currentFileName;
   elements.statusFile.title = state.currentFileLinked
     ? `File collegato: ${state.currentFileName}`
     : `File caricato: ${state.currentFileName}`;

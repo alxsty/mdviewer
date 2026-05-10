@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0-alpha.5
+
+- Sostituita la dicitura testuale `collegato` nella statusbar con una icona link compatta accanto al nome file.
+- Nessuna modifica alla logica di file binding.
+
 ## 3.0.0-alpha.4
 
 - Corretto il ripristino del file collegato dopo un aggiornamento PWA: se il browser richiede di nuovo l'autorizzazione, il collegamento non viene più cancellato automaticamente.

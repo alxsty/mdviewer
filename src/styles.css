@@ -1444,12 +1444,15 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .status-file.is-linked::before {
-  content: '●';
+  content: '';
   display: inline-block;
-  margin-right: 0.35rem;
-  color: var(--accent);
-  font-size: 0.72rem;
-  vertical-align: 0.08rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.38rem;
+  background: var(--accent);
+  vertical-align: -0.12rem;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.59 13.41a1 1 0 0 1 0-1.41l3.59-3.59a1 1 0 0 1 1.41 1.41L12 13.41a1 1 0 0 1-1.41 0Z'/%3E%3Cpath fill='black' d='M8.46 17.66a4 4 0 0 1-2.83-6.83l3.54-3.54a4 4 0 0 1 5.66 0 1 1 0 1 1-1.42 1.42 2 2 0 0 0-2.83 0l-3.54 3.54a2 2 0 1 0 2.83 2.83 1 1 0 1 1 1.41 1.41 3.98 3.98 0 0 1-2.82 1.17Z'/%3E%3Cpath fill='black' d='M12 17.89a4 4 0 0 1-2.83-1.17 1 1 0 0 1 1.42-1.42 2 2 0 0 0 2.83 0l3.54-3.54a2 2 0 1 0-2.83-2.83 1 1 0 0 1-1.41-1.41 4 4 0 1 1 5.65 5.66l-3.54 3.54A4 4 0 0 1 12 17.89Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.59 13.41a1 1 0 0 1 0-1.41l3.59-3.59a1 1 0 0 1 1.41 1.41L12 13.41a1 1 0 0 1-1.41 0Z'/%3E%3Cpath fill='black' d='M8.46 17.66a4 4 0 0 1-2.83-6.83l3.54-3.54a4 4 0 0 1 5.66 0 1 1 0 1 1-1.42 1.42 2 2 0 0 0-2.83 0l-3.54 3.54a2 2 0 1 0 2.83 2.83 1 1 0 1 1 1.41 1.41 3.98 3.98 0 0 1-2.82 1.17Z'/%3E%3Cpath fill='black' d='M12 17.89a4 4 0 0 1-2.83-1.17 1 1 0 0 1 1.42-1.42 2 2 0 0 0 2.83 0l3.54-3.54a2 2 0 1 0-2.83-2.83 1 1 0 0 1-1.41-1.41 4 4 0 1 1 5.65 5.66l-3.54 3.54A4 4 0 0 1 12 17.89Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .hint {
