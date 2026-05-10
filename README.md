@@ -2,10 +2,10 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.0.0-alpha.1**
+Versione corrente: **3.0.0-alpha.2**
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
-- Installazione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
+- Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
 - Note di versione: [CHANGELOG.md](./CHANGELOG.md)
 
 ## Funzioni principali
@@ -125,24 +125,11 @@ npm run build:pages
 
 La build GitHub Pages usa `base: /mdviewer/` e non genera file `.map` di produzione.
 
-## Canali pubblicati
-
-- **Stable / main**: <https://alxsty.github.io/mdviewer/>
-- **Dev / WIP**: <https://alxsty.github.io/mdviewer/dev/>
-
-La versione `dev` viene pubblicata dal branch `dev` ed è pensata per testare funzionalità sperimentali prima della stabilizzazione.
-
 ## Installazione su Android
 
-Per installare la versione stabile della PWA su Android/Chrome apri:
+Per installare la PWA su Android/Chrome apri:
 
 <https://alxsty.github.io/mdviewer/>
-
-Per installare o provare la versione **dev / WIP** apri:
-
-<https://alxsty.github.io/mdviewer/dev/>
-
-> La versione dev contiene funzionalità sperimentali e può cambiare spesso. Usala per testare le novità prima del merge su `main`.
 
 Poi usa il prompt del browser oppure il menu Chrome:
 

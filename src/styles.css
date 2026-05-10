@@ -1306,6 +1306,41 @@ body.line-numbers .markdown-body [data-line-start]::before {
   padding: 0 0.9rem 0 0.65rem;
 }
 
+.toast-host {
+  position: fixed;
+  left: 50%;
+  bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
+  z-index: 10000;
+  display: grid;
+  gap: 0.6rem;
+  width: min(34rem, calc(100vw - 2rem));
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.app-toast {
+  padding: 0.78rem 1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 1rem;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.app-toast--warning {
+  border-color: rgba(251, 191, 36, 0.48);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), var(--panel));
+}
+
+.app-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(0.6rem);
+}
+
 .update-banner {
   position: fixed;
   left: 50%;
@@ -1345,10 +1380,41 @@ body.line-numbers .markdown-body [data-line-start]::before {
   min-height: 2.25rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 0.35rem 1rem;
   border-top: 1px solid var(--panel-border);
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.status-message,
+.status-file {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-message {
+  flex: 1 1 auto;
+}
+
+.status-file {
+  flex: 0 1 min(42vw, 28rem);
+  text-align: right;
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-file.is-linked::before {
+  content: '●';
+  display: inline-block;
+  margin-right: 0.35rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  vertical-align: 0.08rem;
 }
 
 .hint {
@@ -1357,6 +1423,20 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .mobile-only {
   display: none;
+}
+
+@media (max-width: 760px) {
+  .statusbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .status-file {
+    flex-basis: auto;
+    max-width: 100%;
+    text-align: left;
+  }
 }
 
 @media (max-width: 1180px) {

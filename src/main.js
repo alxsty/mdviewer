@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.1';
+const APP_VERSION = '3.0.0-alpha.2';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -61,6 +61,8 @@ const elements = Object.freeze({
   markdownBody: document.querySelector('#markdownBody'),
   dropZone: document.querySelector('#dropZone'),
   statusbar: document.querySelector('#statusbar'),
+  statusMessage: document.querySelector('#statusMessage'),
+  statusFile: document.querySelector('#statusFile'),
   lineFromInput: document.querySelector('#lineFromInput'),
   lineToInput: document.querySelector('#lineToInput'),
   copyRangeButton: document.querySelector('#copyRangeButton'),
@@ -173,9 +175,60 @@ function clampLine(value) {
 
 function setStatus(message) {
   const text = String(message || '').trim();
-  elements.statusbar.textContent = text.length > MAX_TOAST_LENGTH
+  const target = elements.statusMessage || elements.statusbar;
+  target.textContent = text.length > MAX_TOAST_LENGTH
     ? `${text.slice(0, MAX_TOAST_LENGTH - 1)}…`
     : text;
+}
+
+function showToast(message, options = {}) {
+  const { kind = 'info', timeoutMs = 5200 } = options;
+  const text = String(message || '').trim();
+  if (!text) {
+    return;
+  }
+
+  let toastHost = document.querySelector('[data-toast-host="true"]');
+  if (!toastHost) {
+    toastHost = document.createElement('div');
+    toastHost.className = 'toast-host';
+    toastHost.dataset.toastHost = 'true';
+    toastHost.setAttribute('aria-live', 'polite');
+    toastHost.setAttribute('aria-atomic', 'false');
+    document.body.append(toastHost);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `app-toast app-toast--${kind}`;
+  toast.setAttribute('role', 'status');
+  toast.textContent = text;
+  toastHost.append(toast);
+
+  window.setTimeout(() => {
+    toast.classList.add('is-leaving');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    window.setTimeout(() => toast.remove(), 400);
+  }, timeoutMs);
+}
+
+function updateFileStatus() {
+  if (!elements.statusFile) {
+    return;
+  }
+
+  if (!state.currentFileName) {
+    elements.statusFile.textContent = 'Nessun file';
+    elements.statusFile.title = 'Nessun file caricato';
+    elements.statusFile.classList.remove('is-linked');
+    return;
+  }
+
+  const linkedSuffix = state.currentFileLinked ? ' · collegato' : '';
+  elements.statusFile.textContent = `${state.currentFileName}${linkedSuffix}`;
+  elements.statusFile.title = state.currentFileLinked
+    ? `File collegato: ${state.currentFileName}`
+    : `File caricato: ${state.currentFileName}`;
+  elements.statusFile.classList.toggle('is-linked', Boolean(state.currentFileLinked));
 }
 
 function setPressedState(button, isPressed, activeLabel, inactiveLabel, activeText, inactiveText) {
@@ -620,6 +673,7 @@ function applySettings() {
   elements.fontSizeOutput.textContent = `${state.settings.fontSize}px`;
   setThemeToggleState(state.settings.theme === 'dark');
   elements.appVersion.textContent = `v${APP_VERSION}`;
+  updateFileStatus();
   updateSearchOptionButtons();
   updateSearchCounter();
   elements.sourcePanel.hidden = !state.settings.sourcePanelOpen;
@@ -774,6 +828,7 @@ function resetDocumentToEmptyState() {
   elements.sourceSpacer.style.height = `${VIRTUAL_LINE_HEIGHT_PX}px`;
   elements.sourceItems.textContent = '';
   elements.tocList.innerHTML = '<p class="empty-panel">Apri un file Markdown per generare l’indice.</p>';
+  updateFileStatus();
 
   if (state.headingObserver) {
     state.headingObserver.disconnect();
@@ -830,10 +885,10 @@ function onWorkerMessage(event) {
   observeHeadings(result.toc || []);
   updateSourceVirtualList();
 
-  const fileInfo = state.currentFileName ? `${state.currentFileName}${state.currentFileLinked ? ' · collegato' : ''} · ` : '';
+  updateFileStatus();
   const highlightInfo = result.stats?.highlightDisabled ? ' · highlight codice disattivato per performance' : '';
   const metadataInfo = state.frontmatter?.detected ? ' · metadati YAML' : '';
-  setStatus(`${fileInfo}${state.sourceLines.length} righe · ${formatBytes(state.markdownText.length)} · render ${result.stats?.elapsedMs ?? '?'} ms${metadataInfo}${highlightInfo}`);
+  setStatus(`${state.sourceLines.length} righe · ${formatBytes(state.markdownText.length)} · render ${result.stats?.elapsedMs ?? '?'} ms${metadataInfo}${highlightInfo}`);
 }
 
 function renderMarkdown(html, frontmatter = null) {
@@ -1046,6 +1101,7 @@ async function openMarkdownFile(file, options = {}) {
   }
 
   state.currentFileName = file.name;
+  updateFileStatus();
   setStatus(`${statusPrefix} ${file.name} (${formatBytes(file.size)})…`);
 
   try {
@@ -1066,6 +1122,7 @@ async function openMarkdownFileFromHandle(handle, options = {}) {
 
   const file = await handle.getFile();
   state.currentFileLinked = true;
+  updateFileStatus();
 
   if (saveBinding) {
     const saved = await saveStoredFileBinding(handle, file);
@@ -1135,7 +1192,9 @@ async function restoreLastLinkedFile() {
   } catch (_error) {
     await clearStoredFileBinding();
     resetDocumentToEmptyState();
-    setStatus('Il file originale non è più disponibile o il permesso è stato revocato. Ultimo file azzerato.');
+    const message = 'Il file originale non è più disponibile o il permesso è stato revocato. Ultimo file azzerato.';
+    setStatus(message);
+    showToast(message, { kind: 'warning', timeoutMs: 7200 });
   } finally {
     state.fileBindingRestoreInProgress = false;
   }
@@ -1144,6 +1203,7 @@ async function restoreLastLinkedFile() {
 function loadMarkdownText(text, fileName = '') {
   state.markdownText = text;
   state.currentFileName = fileName;
+  updateFileStatus();
   state.frontmatter = null;
   state.sourceLines = splitMarkdownLines(text);
   state.selectedLineStart = 1;
@@ -1583,6 +1643,42 @@ function bindInstallFlow() {
 }
 
 
+
+function isEditableCopyTarget(target) {
+  const element = target instanceof Element ? target : null;
+  if (!element) {
+    return false;
+  }
+
+  return Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
+}
+
+function isCopyShortcutForActiveDocumentArea(event) {
+  if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey || event.key.toLowerCase() !== 'c') {
+    return false;
+  }
+
+  if (isEditableCopyTarget(event.target)) {
+    return false;
+  }
+
+  const active = document.activeElement;
+  const target = event.target instanceof Element ? event.target : null;
+  return Boolean(
+    (target && (elements.markdownBody.contains(target) || elements.sourcePanel.contains(target)))
+    || (active && (elements.markdownBody.contains(active) || elements.sourcePanel.contains(active)))
+  );
+}
+
+function handleDocumentAreaCopyShortcut(event) {
+  if (!isCopyShortcutForActiveDocumentArea(event)) {
+    return;
+  }
+
+  event.preventDefault();
+  copySelectedRange();
+}
+
 function bindViewportZoomGuards() {
   let lastTouchEndAt = 0;
 
@@ -1699,6 +1795,8 @@ function bindEvents() {
     }
   });
 
+  document.addEventListener('keydown', handleDocumentAreaCopyShortcut);
+
   elements.fontFamilySelect.addEventListener('change', () => {
     state.settings.fontFamily = elements.fontFamilySelect.value;
     saveSettings();
@@ -1744,6 +1842,7 @@ function bindEvents() {
   });
 
   elements.markdownBody.addEventListener('click', handleRenderedBlockClick);
+  elements.markdownBody.addEventListener('mousedown', () => elements.markdownBody.focus({ preventScroll: true }));
   elements.markdownBody.addEventListener('pointerdown', startRenderedBlockTouchRange);
   elements.markdownBody.addEventListener('pointermove', handleRenderedBlockTouchMove);
   elements.markdownBody.addEventListener('pointerup', cancelTouchLongPressTimer);

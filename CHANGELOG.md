@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0-alpha.2
+
+- Aggiunto toast visibile quando il file collegato non è più disponibile al ripristino.
+- Separata la statusbar in messaggi a sinistra e nome file a destra.
+- Aggiunto stato file "collegato" nella sezione destra della statusbar.
+- Aggiunta scorciatoia Ctrl/Cmd+C nelle aree Markdown e Sorgente per copiare l'intervallo Da/A corrente.
+
 ## 3.0.0-alpha.1
 
 - Aggiunto primo supporto “file collegato” tramite File System Access API, dove disponibile.

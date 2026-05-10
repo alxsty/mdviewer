@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.0.0-alpha.1</span>
+          <span id="appVersion" class="brand-version">v3.0.0-alpha.2</span>
         </div>
 
         <div class="topbar-actions">
@@ -127,7 +127,7 @@
           </div>
 
           <article class="markdown-shell" aria-label="Documento Markdown">
-            <div id="markdownBody" class="markdown-body empty-state">
+            <div id="markdownBody" class="markdown-body empty-state" tabindex="0">
               <h1>Markdown Viewer PWA</h1>
               <p>Apri un file <code>.md</code> dal dispositivo. L’app renderizza il documento in sola lettura, crea l’indice dagli heading e permette di copiare righe o blocchi dal sorgente.</p>
               <p class="hint">Per file da qualche MB il parsing viene eseguito in un Web Worker, così l’interfaccia rimane usabile.</p>
@@ -179,7 +179,10 @@
         </aside>
       </main>
 
-      <footer id="statusbar" class="statusbar" role="status">Pronto.</footer>
+      <footer id="statusbar" class="statusbar" role="status">
+        <span id="statusMessage" class="status-message">Pronto.</span>
+        <span id="statusFile" class="status-file" title="Nessun file caricato">Nessun file</span>
+      </footer>
     </div>
 
     <script type="module" src="/src/main.js"></script>
