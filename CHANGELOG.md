@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.12
+
+- Rifinito lo spacing del campo “Vai alla riga”: la X di pulizia resta separata dallo spinner numerico ma con meno spazio vuoto.
+
 ## 3.0.0-alpha.11
 
 - Corretto il layout del comando **Vai alla riga**: la X di pulizia non si sovrappone più agli spinner del campo numerico quando il campo riceve il focus.
