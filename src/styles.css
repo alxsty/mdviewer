@@ -835,6 +835,29 @@ input[type="number"] {
   outline: none;
 }
 
+.close-file-button {
+  position: absolute;
+  top: 0.72rem;
+  right: calc(var(--scrollbar-size) + 0.82rem);
+  z-index: 15;
+  width: 2.15rem;
+  height: 2.15rem;
+  pointer-events: auto;
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.58);
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+[data-theme="light"] .close-file-button {
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.close-file-button[hidden] {
+  display: none !important;
+}
+
 .markdown-body {
   position: relative;
   max-width: none;
@@ -1760,7 +1783,6 @@ body.line-numbers .markdown-body [data-line-start]::before {
   right: calc(100% + 0.55rem);
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
   width: max-content;
   padding: 0.35rem;
   border: 1px solid rgba(148, 163, 184, 0.24);
@@ -1776,9 +1798,16 @@ body.line-numbers .markdown-body [data-line-start]::before {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
 }
 
+.scroll-line-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .scroll-line-input {
-  width: 5.25rem;
+  width: 5.75rem;
   height: 1.95rem;
+  padding: 0 1.8rem 0 0.7rem;
   border: 1px solid var(--panel-border);
   border-radius: 999px;
   background: rgba(2, 6, 23, 0.2);
@@ -1800,23 +1829,28 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .scroll-line-clear {
+  position: absolute;
+  right: 0.28rem;
+  top: 50%;
   display: grid;
   place-items: center;
-  width: 1.95rem;
-  height: 1.95rem;
-  border: 1px solid var(--panel-border);
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1;
+  opacity: 0.68;
   cursor: pointer;
+  transform: translateY(-50%);
 }
 
 .scroll-line-clear:hover {
-  border-color: var(--accent);
-  background: rgba(56, 189, 248, 0.1);
+  background: rgba(56, 189, 248, 0.12);
+  opacity: 1;
 }
 
 .scroll-line-group.is-open .scroll-jump-button {
@@ -1835,6 +1869,6 @@ body.line-numbers .markdown-body [data-line-start]::before {
   }
 
   .scroll-line-input {
-    width: 4.85rem;
+    width: 5.35rem;
   }
 }

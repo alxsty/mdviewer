@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.10
+
+- Spostata la X di pulizia del comando **Vai alla riga** dentro il campo numerico.
+- Aggiunto bottone **Chiudi file** nel box Markdown per tornare allo stato “nessun file caricato”.
+- La chiusura del file azzera documento, indice, sorgente, ricerca, intervallo righe e collegamento persistente IndexedDB.
+
 ## 3.0.0-alpha.9
 
 - Uniformato lo stile dei toast di file binding allo stile del banner update.

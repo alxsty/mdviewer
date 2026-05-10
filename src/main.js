@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.9';
+const APP_VERSION = '3.0.0-alpha.10';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 4;
@@ -61,6 +61,7 @@ const elements = Object.freeze({
   fontSizeOutput: document.querySelector('#fontSizeOutput'),
   copyWithLineNumbersToggle: document.querySelector('#copyWithLineNumbersToggle'),
   markdownBody: document.querySelector('#markdownBody'),
+  closeFileButton: document.querySelector('#closeFileButton'),
   dropZone: document.querySelector('#dropZone'),
   statusbar: document.querySelector('#statusbar'),
   statusMessage: document.querySelector('#statusMessage'),
@@ -249,6 +250,10 @@ function showToast(message, options = {}) {
 function updateFileStatus() {
   if (!elements.statusFile) {
     return;
+  }
+
+  if (elements.closeFileButton) {
+    elements.closeFileButton.hidden = !state.currentFileName;
   }
 
   if (!state.currentFileName) {
@@ -1019,6 +1024,15 @@ function resetDocumentToEmptyState() {
   updateSourceVirtualList();
   closeScrollLinePanel();
   updateScrollJumpControls();
+}
+
+
+async function closeCurrentFile() {
+  state.parseRequestId += 1;
+  await clearStoredFileBinding();
+  resetDocumentToEmptyState();
+  setStatus('File chiuso.');
+  showToast('File chiuso.', { kind: 'info', timeoutMs: 3600 });
 }
 
 function splitMarkdownLines(text) {
@@ -2054,6 +2068,10 @@ function bindEvents() {
 
   elements.openFileButton.addEventListener('click', () => {
     void openMarkdownFileWithSystemPicker();
+  });
+
+  elements.closeFileButton.addEventListener('click', () => {
+    void closeCurrentFile();
   });
 
   elements.tocToggle.addEventListener('click', toggleTocPanel);
