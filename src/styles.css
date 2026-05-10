@@ -1319,6 +1319,10 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .app-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
   padding: 0.78rem 1rem;
   border: 1px solid var(--panel-border);
   border-radius: 1rem;
@@ -1327,8 +1331,29 @@ body.line-numbers .markdown-body [data-line-start]::before {
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
   transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.app-toast__message {
+  min-width: 0;
+}
+
+.app-toast__button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  border-radius: 999px;
+  padding: 0.42rem 0.72rem;
+  background: rgba(56, 189, 248, 0.16);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-toast__button:hover {
+  background: rgba(56, 189, 248, 0.26);
 }
 
 .app-toast--warning {

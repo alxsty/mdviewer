@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.2';
+const APP_VERSION = '3.0.0-alpha.3';
 const SETTINGS_SCHEMA_VERSION = 4;
 const INSTALL_STATE_KEY = 'md-viewer-install-state';
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -182,7 +182,7 @@ function setStatus(message) {
 }
 
 function showToast(message, options = {}) {
-  const { kind = 'info', timeoutMs = 5200 } = options;
+  const { kind = 'info', timeoutMs = 5200, actionLabel = '', onAction = null } = options;
   const text = String(message || '').trim();
   if (!text) {
     return;
@@ -201,7 +201,29 @@ function showToast(message, options = {}) {
   const toast = document.createElement('div');
   toast.className = `app-toast app-toast--${kind}`;
   toast.setAttribute('role', 'status');
-  toast.textContent = text;
+
+  if (actionLabel && typeof onAction === 'function') {
+    toast.classList.add('app-toast--actionable');
+
+    const messageNode = document.createElement('span');
+    messageNode.className = 'app-toast__message';
+    messageNode.textContent = text;
+
+    const actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = 'app-toast__button';
+    actionButton.textContent = actionLabel;
+    actionButton.addEventListener('click', () => {
+      toast.classList.add('is-leaving');
+      window.setTimeout(() => toast.remove(), 180);
+      onAction();
+    });
+
+    toast.append(messageNode, actionButton);
+  } else {
+    toast.textContent = text;
+  }
+
   toastHost.append(toast);
 
   window.setTimeout(() => {
@@ -784,7 +806,9 @@ async function clearStoredFileBinding() {
   }
 }
 
-async function ensureFileReadPermission(handle) {
+async function ensureFileReadPermission(handle, options = {}) {
+  const { requestPermission = true } = options;
+
   if (!handle) {
     return 'denied';
   }
@@ -798,11 +822,28 @@ async function ensureFileReadPermission(handle) {
     return permission;
   }
 
-  if (typeof handle.requestPermission === 'function') {
+  if (requestPermission && typeof handle.requestPermission === 'function') {
     permission = await handle.requestPermission({ mode: 'read' });
   }
 
   return permission;
+}
+
+function createFileBindingPermissionError(permission) {
+  const error = new Error('Permesso di lettura non concesso.');
+  error.name = 'FileBindingPermissionError';
+  error.permissionState = permission;
+  return error;
+}
+
+function isFileBindingPermissionError(error) {
+  return error?.name === 'FileBindingPermissionError'
+    || error?.name === 'NotAllowedError'
+    || String(error?.message || '').toLowerCase().includes('permesso');
+}
+
+function isFileBindingMissingError(error) {
+  return error?.name === 'NotFoundError';
 }
 
 function resetDocumentToEmptyState() {
@@ -1113,11 +1154,11 @@ async function openMarkdownFile(file, options = {}) {
 }
 
 async function openMarkdownFileFromHandle(handle, options = {}) {
-  const { saveBinding = false, statusPrefix = 'Caricamento' } = options;
+  const { saveBinding = false, statusPrefix = 'Caricamento', requestPermission = true } = options;
 
-  const permission = await ensureFileReadPermission(handle);
+  const permission = await ensureFileReadPermission(handle, { requestPermission });
   if (permission !== 'granted') {
-    throw new Error('Permesso di lettura non concesso.');
+    throw createFileBindingPermissionError(permission);
   }
 
   const file = await handle.getFile();
@@ -1170,7 +1211,9 @@ async function openMarkdownFileWithSystemPicker() {
   }
 }
 
-async function restoreLastLinkedFile() {
+async function restoreLastLinkedFile(options = {}) {
+  const { requestPermission = false } = options;
+
   if (!isFileSystemAccessSupported()) {
     return;
   }
@@ -1186,15 +1229,45 @@ async function restoreLastLinkedFile() {
   try {
     const file = await openMarkdownFileFromHandle(storedBinding.handle, {
       saveBinding: true,
-      statusPrefix: 'Ripristino'
+      statusPrefix: 'Ripristino',
+      requestPermission
     });
     setStatus(`File collegato caricato dal dispositivo: ${file.name}.`);
-  } catch (_error) {
-    await clearStoredFileBinding();
+  } catch (error) {
     resetDocumentToEmptyState();
-    const message = 'Il file originale non è più disponibile o il permesso è stato revocato. Ultimo file azzerato.';
+
+    if (isFileBindingPermissionError(error)) {
+      const message = 'Il file collegato richiede una nuova autorizzazione. Il collegamento è stato mantenuto.';
+      setStatus(message);
+      showToast(message, {
+        kind: 'warning',
+        timeoutMs: 12000,
+        actionLabel: 'Autorizza',
+        onAction: () => {
+          void restoreLastLinkedFile({ requestPermission: true });
+        }
+      });
+      return;
+    }
+
+    if (isFileBindingMissingError(error)) {
+      await clearStoredFileBinding();
+      const message = 'Il file originale non è più disponibile. Ultimo file azzerato.';
+      setStatus(message);
+      showToast(message, { kind: 'warning', timeoutMs: 7200 });
+      return;
+    }
+
+    const message = 'Il file collegato non può essere ripristinato ora. Il collegamento è stato mantenuto.';
     setStatus(message);
-    showToast(message, { kind: 'warning', timeoutMs: 7200 });
+    showToast(message, {
+      kind: 'warning',
+      timeoutMs: 12000,
+      actionLabel: 'Riprova',
+      onAction: () => {
+        void restoreLastLinkedFile({ requestPermission: true });
+      }
+    });
   } finally {
     state.fileBindingRestoreInProgress = false;
   }

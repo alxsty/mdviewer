@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.3
+
+- Corretto il ripristino del file collegato dopo un aggiornamento PWA: se il browser richiede di nuovo l'autorizzazione, il collegamento non viene più cancellato automaticamente.
+- Aggiunto toast con azione **Autorizza/Riprova** per rilanciare il ripristino del file collegato da un gesto utente.
+- Il binding viene azzerato solo quando il file originale risulta non più disponibile.
+
 ## 3.0.0-alpha.2
 
 - Aggiunto toast visibile quando il file collegato non è più disponibile al ripristino.
