@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Material Symbols Rounded Local';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/fonts/material-symbols-rounded-mdviewer.woff2') format('woff2');
+  font-display: block;
+}
+
 :root {
   color-scheme: dark;
   --bg: #0f172a;
@@ -47,6 +55,41 @@
 
 * {
   box-sizing: border-box;
+}
+
+
+.material-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  font-family: 'Material Symbols Rounded Local';
+  font-size: 1.24rem;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  word-wrap: normal;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.icon-button .material-icon,
+.mini-icon-button .material-icon,
+.scroll-line-clear .material-icon {
+  pointer-events: none;
 }
 
 [hidden] {
@@ -285,9 +328,9 @@ body.settings-collapsed {
   border-radius: 999px;
   background: var(--surface-alt);
   color: var(--text);
-  font-size: 0.86rem;
-  font-weight: 850;
-  letter-spacing: -0.04em;
+  font-size: 1.18rem;
+  font-weight: normal;
+  letter-spacing: normal;
 }
 
 .typography-settings select {
@@ -450,6 +493,12 @@ input[type="number"] {
   width: 1.22rem;
   height: 1.22rem;
   fill: currentColor;
+}
+
+.icon-button .material-icon,
+.icon-file-button .material-icon,
+.install-button .material-icon {
+  font-size: 1.28rem;
 }
 
 .numeric-icon-button {
@@ -687,7 +736,42 @@ input[type="number"] {
   grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
-.source-panel[hidden] {
+.source-panel
+.material-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  font-family: 'Material Symbols Rounded Local';
+  font-size: 1.24rem;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  word-wrap: normal;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.icon-button .material-icon,
+.mini-icon-button .material-icon,
+.scroll-line-clear .material-icon {
+  pointer-events: none;
+}
+
+[hidden] {
   display: none;
 }
 
@@ -854,7 +938,42 @@ input[type="number"] {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
 }
 
-.close-file-button[hidden] {
+.close-file-button
+.material-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  font-family: 'Material Symbols Rounded Local';
+  font-size: 1.24rem;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  word-wrap: normal;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.icon-button .material-icon,
+.mini-icon-button .material-icon,
+.scroll-line-clear .material-icon {
+  pointer-events: none;
+}
+
+[hidden] {
   display: none !important;
 }
 
@@ -1113,10 +1232,8 @@ body.line-numbers .markdown-body .metadata-card::before {
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
-.markdown-body .metadata-chevron svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: currentColor;
+.markdown-body .metadata-chevron .material-icon {
+  font-size: 1.25rem;
 }
 
 .markdown-body .metadata-summary:hover .metadata-chevron {
@@ -1260,11 +1377,16 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .source-range-separator {
   color: var(--muted);
-  font-size: 1rem;
-  font-weight: 850;
+  font-size: 1.1rem;
+  font-weight: normal;
   line-height: 1;
   opacity: 0.72;
   user-select: none;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
 .line-tools .copy-range-button,
@@ -1478,15 +1600,27 @@ body.line-numbers .markdown-body [data-line-start]::before {
 }
 
 .status-file.is-linked::before {
-  content: '';
-  display: inline-block;
-  width: 0.9rem;
-  height: 0.9rem;
+  content: 'link';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 0.95rem;
   margin-right: 0.38rem;
-  background: var(--accent);
-  vertical-align: -0.12rem;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.59 13.41a1 1 0 0 1 0-1.41l3.59-3.59a1 1 0 0 1 1.41 1.41L12 13.41a1 1 0 0 1-1.41 0Z'/%3E%3Cpath fill='black' d='M8.46 17.66a4 4 0 0 1-2.83-6.83l3.54-3.54a4 4 0 0 1 5.66 0 1 1 0 1 1-1.42 1.42 2 2 0 0 0-2.83 0l-3.54 3.54a2 2 0 1 0 2.83 2.83 1 1 0 1 1 1.41 1.41 3.98 3.98 0 0 1-2.82 1.17Z'/%3E%3Cpath fill='black' d='M12 17.89a4 4 0 0 1-2.83-1.17 1 1 0 0 1 1.42-1.42 2 2 0 0 0 2.83 0l3.54-3.54a2 2 0 1 0-2.83-2.83 1 1 0 0 1-1.41-1.41 4 4 0 1 1 5.65 5.66l-3.54 3.54A4 4 0 0 1 12 17.89Z'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M10.59 13.41a1 1 0 0 1 0-1.41l3.59-3.59a1 1 0 0 1 1.41 1.41L12 13.41a1 1 0 0 1-1.41 0Z'/%3E%3Cpath fill='black' d='M8.46 17.66a4 4 0 0 1-2.83-6.83l3.54-3.54a4 4 0 0 1 5.66 0 1 1 0 1 1-1.42 1.42 2 2 0 0 0-2.83 0l-3.54 3.54a2 2 0 1 0 2.83 2.83 1 1 0 1 1 1.41 1.41 3.98 3.98 0 0 1-2.82 1.17Z'/%3E%3Cpath fill='black' d='M12 17.89a4 4 0 0 1-2.83-1.17 1 1 0 0 1 1.42-1.42 2 2 0 0 0 2.83 0l3.54-3.54a2 2 0 1 0-2.83-2.83 1 1 0 0 1-1.41-1.41 4 4 0 1 1 5.65 5.66l-3.54 3.54A4 4 0 0 1 12 17.89Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  color: var(--accent);
+  font-family: 'Material Symbols Rounded Local';
+  font-size: 0.95rem;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  vertical-align: -0.14rem;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
 .hint {
@@ -1667,7 +1801,42 @@ body.line-numbers .markdown-body [data-line-start]::before {
   pointer-events: none;
 }
 
-.scroll-jump-controls[hidden] {
+.scroll-jump-controls
+.material-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  font-family: 'Material Symbols Rounded Local';
+  font-size: 1.24rem;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  word-wrap: normal;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.icon-button .material-icon,
+.mini-icon-button .material-icon,
+.scroll-line-clear .material-icon {
+  pointer-events: none;
+}
+
+[hidden] {
   display: none !important;
 }
 

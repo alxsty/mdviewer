@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.0.0-alpha.12**
+Versione corrente: **3.0.0-alpha.14**
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
@@ -164,3 +164,7 @@ Nei browser senza File System Access API rimane disponibile il picker classico `
 Quando viene pubblicata una nuova build, il service worker la rileva e mostra un banner **Nuova versione disponibile**.
 
 Premendo **Aggiorna**, la PWA attiva il nuovo service worker e ricarica la pagina una sola volta.
+
+### Icone UI
+
+La V3 usa Google Material Symbols Rounded in modalità self-hosted: il file WOFF2 è incluso nel progetto e viene servito/cacheato dalla PWA senza dipendenze da CDN esterni.

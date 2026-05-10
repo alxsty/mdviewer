@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.12';
+const APP_VERSION = '3.0.0-alpha.14';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 4;
@@ -285,19 +285,13 @@ function setPressedState(button, isPressed, activeLabel, inactiveLabel, activeTe
   }
 }
 
-function getThemeIconSvg(isDarkTheme) {
-  if (isDarkTheme) {
-    return `
-      <svg class="icon-svg theme-icon theme-icon-moon" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-        <path d="M20.15 15.32a.92.92 0 0 1 .22.96 8.9 8.9 0 0 1-8.32 5.72A9.05 9.05 0 0 1 3 12.95a8.9 8.9 0 0 1 5.72-8.32.92.92 0 0 1 1.18 1.1 7.1 7.1 0 0 0 8.37 8.37.92.92 0 0 1 .88.22ZM12.05 20.15a7.03 7.03 0 0 0 5.68-2.88 8.93 8.93 0 0 1-10.99-11 7.03 7.03 0 0 0-1.89 4.68 7.2 7.2 0 0 0 7.2 7.2Z"/>
-      </svg>`;
-  }
+function getMaterialIconMarkup(name, extraClass = '') {
+  const className = extraClass ? `material-icon ${extraClass}` : 'material-icon';
+  return `<span class="${className}" aria-hidden="true">${name}</span>`;
+}
 
-  return `
-    <svg class="icon-svg theme-icon theme-icon-sun" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-      <path d="M12 7.25A4.75 4.75 0 1 0 12 16.75 4.75 4.75 0 0 0 12 7.25Zm0 1.8A2.95 2.95 0 1 1 12 14.95 2.95 2.95 0 0 1 12 9.05Z"/>
-      <path d="M12 2.2a.9.9 0 0 1 .9.9v1.3a.9.9 0 1 1-1.8 0V3.1a.9.9 0 0 1 .9-.9ZM12 18.7a.9.9 0 0 1 .9.9v1.3a.9.9 0 1 1-1.8 0v-1.3a.9.9 0 0 1 .9-.9ZM21.8 12a.9.9 0 0 1-.9.9h-1.3a.9.9 0 1 1 0-1.8h1.3a.9.9 0 0 1 .9.9ZM5.3 12a.9.9 0 0 1-.9.9H3.1a.9.9 0 1 1 0-1.8h1.3a.9.9 0 0 1 .9.9ZM18.93 5.07a.9.9 0 0 1 0 1.27l-.92.92a.9.9 0 0 1-1.27-1.27l.92-.92a.9.9 0 0 1 1.27 0ZM7.26 16.74a.9.9 0 0 1 0 1.27l-.92.92a.9.9 0 0 1-1.27-1.27l.92-.92a.9.9 0 0 1 1.27 0ZM18.93 18.93a.9.9 0 0 1-1.27 0l-.92-.92a.9.9 0 0 1 1.27-1.27l.92.92a.9.9 0 0 1 0 1.27ZM7.26 7.26a.9.9 0 0 1-1.27 0l-.92-.92A.9.9 0 1 1 6.34 5.07l.92.92a.9.9 0 0 1 0 1.27Z"/>
-    </svg>`;
+function getThemeIconMarkup(isDarkTheme) {
+  return getMaterialIconMarkup(isDarkTheme ? 'dark_mode' : 'light_mode', 'theme-icon');
 }
 
 function setThemeToggleState(isDarkTheme) {
@@ -310,7 +304,7 @@ function setThemeToggleState(isDarkTheme) {
   button.setAttribute('aria-pressed', String(Boolean(isDarkTheme)));
   button.setAttribute('aria-label', isDarkTheme ? 'Passa al tema chiaro' : 'Passa al tema scuro');
   button.title = isDarkTheme ? 'Passa al tema chiaro' : 'Passa al tema scuro';
-  button.innerHTML = getThemeIconSvg(isDarkTheme);
+  button.innerHTML = getThemeIconMarkup(isDarkTheme);
 }
 
 function syncControlStates() {
@@ -354,9 +348,7 @@ function syncControlStates() {
     elements.copyWithLineNumbersToggle,
     Boolean(state.settings.copyWithLineNumbers),
     'Disattiva copia con numeri di riga',
-    'Copia con numeri di riga',
-    '123',
-    '123'
+    'Copia con numeri di riga'
   );
 }
 
@@ -1146,11 +1138,7 @@ function createFrontmatterCard(frontmatter) {
   const chevron = document.createElement('span');
   chevron.className = 'metadata-chevron';
   chevron.setAttribute('aria-hidden', 'true');
-  chevron.innerHTML = `
-    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-      <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/>
-    </svg>
-  `;
+  chevron.innerHTML = getMaterialIconMarkup('expand_more');
 
   summary.append(summaryText, chevron);
   details.append(summary);

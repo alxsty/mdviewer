@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0-alpha.14
+
+- Aggiornato il font Material Symbols Rounded self-hosted con subset esteso e peso 400.
+- Sostituita l’icona Apri file con `file_open`, più leggibile e meno pesante.
+- Sostituito il separatore testuale `→` tra i campi sorgente con icona Material `arrow_forward`.
+
+## 3.0.0-alpha.13
+
+- Aggiunti Google Material Symbols Rounded self-hosted come font WOFF2 locale.
+- Sostituite le principali icone SVG inline con Material Symbols coerenti.
+- Icone self-hosted caricate come asset dell’app e cacheate dal service worker alla prima richiesta.
+
 ## 3.0.0-alpha.12
 
 - Rifinito lo spacing del campo “Vai alla riga”: la X di pulizia resta separata dallo spinner numerico ma con meno spazio vuoto.
