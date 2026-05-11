@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0-alpha.17
+
+- Migliorato layout mobile del pannello Sorgente: gutter dei numeri di riga più compatto.
+- Sistemato il posizionamento dei toast/banner su smartphone: non debordano più a destra e i bottoni restano cliccabili.
+
 ## 3.0.0-alpha.16
 
 - Migliorata la visibilità del bottone Installa: resta disponibile nel browser anche quando `beforeinstallprompt` non è ancora stato ricevuto.
