@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.17';
+const APP_VERSION = '3.0.0-alpha.18';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 4;
@@ -126,6 +126,7 @@ const state = {
   currentFileLinked: false,
   filePickerFallbackOpening: false,
   serviceWorkerRegistration: null,
+  updateFallbackReloadTimer: null,
   serviceWorkerUpdateCheckInProgress: false,
   lastServiceWorkerUpdateCheckAt: 0
 };
@@ -1746,17 +1747,21 @@ function rememberInstalledApp() {
 }
 
 function updateInstallButtonVisibility() {
-  if (isStandaloneDisplayMode()) {
+  const isStandalone = isStandaloneDisplayMode();
+
+  if (isStandalone) {
     rememberInstalledApp();
+    elements.installButton.hidden = true;
+    return;
   }
 
-  // beforeinstallprompt non è sempre affidabile su Android/Chrome: il browser può
-  // mostrare l'icona di installazione nella barra indirizzi anche quando la pagina
-  // non ha ancora ricevuto o non riceverà più l'evento. Per questo mostriamo il
-  // bottone custom quando siamo nel browser e l'app non risulta già installata
-  // per lo scope corrente. Se il prompt non è disponibile, il click mostra una
-  // breve istruzione fallback invece di restare invisibile.
-  elements.installButton.hidden = isStandaloneDisplayMode() || isAppInstalledKnown();
+  // L'informazione appinstalled resta nel localStorage dell'origine anche dopo
+  // una disinstallazione manuale della PWA. Per evitare falsi positivi su Android,
+  // il bottone custom viene nascosto solo quando la pagina è davvero avviata in
+  // display-mode standalone/fullscreen. Nel browser resta visibile e, se Chrome
+  // non fornisce beforeinstallprompt, mostra il fallback testuale.
+  localStorage.removeItem(INSTALL_STATE_KEY);
+  elements.installButton.hidden = false;
 }
 
 function requestServiceWorkerVersion(worker) {
@@ -1793,15 +1798,31 @@ function createUpdateBanner(registration) {
   banner.dataset.updateBanner = 'true';
   banner.setAttribute('role', 'status');
   banner.innerHTML = `
-    <span>Nuova versione disponibile.</span>
+    <span class="update-banner__message">Nuova versione disponibile.</span>
     <button type="button" class="update-banner__button">Aggiorna</button>
   `;
 
+  const message = banner.querySelector('.update-banner__message');
   const button = banner.querySelector('button');
   button.addEventListener('click', () => {
     state.updateAccepted = true;
     button.disabled = true;
     button.textContent = 'Aggiornamento…';
+    if (message) {
+      message.textContent = 'Aggiornamento in corso…';
+    }
+    setStatus('Aggiornamento app in corso…');
+
+    if (state.updateFallbackReloadTimer) {
+      window.clearTimeout(state.updateFallbackReloadTimer);
+    }
+
+    state.updateFallbackReloadTimer = window.setTimeout(() => {
+      if (!state.updateReloadPending) {
+        state.updateReloadPending = true;
+        window.location.reload();
+      }
+    }, 3500);
 
     if (registration.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -1900,6 +1921,11 @@ function watchServiceWorkerUpdates(registration) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!state.updateAccepted || state.updateReloadPending) {
       return;
+    }
+
+    if (state.updateFallbackReloadTimer) {
+      window.clearTimeout(state.updateFallbackReloadTimer);
+      state.updateFallbackReloadTimer = null;
     }
 
     state.updateReloadPending = true;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.18
+
+- Irrobustito il flusso di aggiornamento PWA: dopo il click su **Aggiorna** il banner passa a “Aggiornamento in corso…” e forza un reload di fallback se `controllerchange` non arriva.
+- Il bottone **Installa** resta visibile nel browser quando la PWA non è avviata in modalità standalone, anche se esiste uno stato `appinstalled` rimasto nel localStorage dopo una disinstallazione.
+- Pulito automaticamente lo stato installazione locale obsoleto quando l’app viene aperta nel browser.
+
 ## 3.0.0-alpha.17
 
 - Migliorato layout mobile del pannello Sorgente: gutter dei numeri di riga più compatto.
