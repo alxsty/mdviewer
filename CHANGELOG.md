@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.16
+
+- Migliorata la visibilità del bottone Installa: resta disponibile nel browser anche quando `beforeinstallprompt` non è ancora stato ricevuto.
+- Aggiunto fallback con toast quando il prompt nativo non è disponibile e Chrome mostra l’icona installazione propria.
+- Stato installazione separato per scope stable/dev usando la base URL della build.
+
 ## 3.0.0-alpha.14
 
 - Aggiornato il font Material Symbols Rounded self-hosted con subset esteso e peso 400.

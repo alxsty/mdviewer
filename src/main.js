@@ -3,11 +3,11 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.14';
+const APP_VERSION = '3.0.0-alpha.16';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 4;
-const INSTALL_STATE_KEY = 'md-viewer-install-state';
+const INSTALL_STATE_KEY = `md-viewer-install-state:${import.meta.env.BASE_URL}`;
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
 const FILE_BINDING_DB_VERSION = 1;
 const FILE_BINDING_STORE_NAME = 'file-bindings';
@@ -1750,7 +1750,13 @@ function updateInstallButtonVisibility() {
     rememberInstalledApp();
   }
 
-  elements.installButton.hidden = isStandaloneDisplayMode() || isAppInstalledKnown() || !state.deferredInstallPrompt;
+  // beforeinstallprompt non è sempre affidabile su Android/Chrome: il browser può
+  // mostrare l'icona di installazione nella barra indirizzi anche quando la pagina
+  // non ha ancora ricevuto o non riceverà più l'evento. Per questo mostriamo il
+  // bottone custom quando siamo nel browser e l'app non risulta già installata
+  // per lo scope corrente. Se il prompt non è disponibile, il click mostra una
+  // breve istruzione fallback invece di restare invisibile.
+  elements.installButton.hidden = isStandaloneDisplayMode() || isAppInstalledKnown();
 }
 
 function requestServiceWorkerVersion(worker) {
@@ -1955,8 +1961,17 @@ function bindInstallFlow() {
   window.setTimeout(updateInstallButtonVisibility, 1200);
 
   elements.installButton.addEventListener('click', async () => {
-    if (!state.deferredInstallPrompt || isStandaloneDisplayMode()) {
+    if (isStandaloneDisplayMode()) {
       updateInstallButtonVisibility();
+      return;
+    }
+
+    if (!state.deferredInstallPrompt) {
+      showToast('Per installare, usa l’icona Installa di Chrome nella barra indirizzi o il menu del browser.', {
+        kind: 'info',
+        timeoutMs: 7200
+      });
+      setStatus('Prompt installazione non disponibile: usa l’icona Installa di Chrome.');
       return;
     }
 
