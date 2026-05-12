@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0-alpha.4
+
+- Compattato il layout del pannello **Sorgente**: i campi del range righe ora hanno larghezza fissa ottimizzata per 5 cifre.
+- Allineato lo stile dei bottoni formato copia agli altri icon button dell’app, eliminando il fondo diverso del gruppo formato.
+- Stabilizzato il gruppo formato copia per evitare overflow nel pannello sorgente su schermi tablet.
+
 ## 3.1.0-alpha.3
 
 - Rifinito il layout del pannello **Sorgente** su tablet: i tre bottoni del formato copia restano sulla stessa riga del bottone **Copia**, con il campo template nella riga sotto.
