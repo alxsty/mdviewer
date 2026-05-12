@@ -3,10 +3,10 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.1';
+const APP_VERSION = '3.1.0-alpha.2';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
-const SETTINGS_SCHEMA_VERSION = 5;
+const SETTINGS_SCHEMA_VERSION = 6;
 const INSTALL_STATE_KEY = `md-viewer-install-state:${import.meta.env.BASE_URL}`;
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
 const FILE_BINDING_DB_VERSION = 1;
@@ -18,7 +18,8 @@ const COPY_TEMPLATE_MODES = Object.freeze({
   CUSTOM: 'custom'
 });
 const COPY_TEMPLATE_MODE_VALUES = new Set(Object.values(COPY_TEMPLATE_MODES));
-const DEFAULT_COPY_CUSTOM_TEMPLATE = '[\\indice]: \\riga';
+const DEFAULT_COPY_CUSTOM_TEMPLATE = '';
+const LEGACY_DEFAULT_COPY_CUSTOM_TEMPLATE = '[\\indice]: \\riga';
 const COPY_TEMPLATE_MAX_LENGTH = 200;
 const COPY_TEMPLATE_PRESETS = Object.freeze({
   [COPY_TEMPLATE_MODES.PLAIN]: '\\riga',
@@ -78,7 +79,7 @@ const elements = Object.freeze({
   fontSizeInput: document.querySelector('#fontSizeInput'),
   fontSizeOutput: document.querySelector('#fontSizeOutput'),
   copyTemplateControl: document.querySelector('#copyTemplateControl'),
-  copyTemplateSelect: document.querySelector('#copyTemplateSelect'),
+  copyTemplateModeButtons: [...document.querySelectorAll('[data-copy-template-mode]')],
   copyTemplateEditButton: document.querySelector('#copyTemplateEditButton'),
   copyCustomTemplatePanel: document.querySelector('#copyCustomTemplatePanel'),
   copyCustomTemplateInput: document.querySelector('#copyCustomTemplateInput'),
@@ -153,7 +154,7 @@ const state = {
   serviceWorkerUpdateCheckInProgress: false,
   lastServiceWorkerUpdateCheckAt: 0,
   copyCustomTemplateEditing: false,
-  copyTemplateModeBeforeEdit: null
+  copyCustomTemplateBeforeEdit: DEFAULT_COPY_CUSTOM_TEMPLATE
 };
 
 const INITIAL_MARKDOWN_BODY_HTML = elements.markdownBody.innerHTML;
@@ -181,8 +182,20 @@ function loadSettings() {
 
     if (typeof migratedSettings.copyCustomTemplate !== 'string' || !migratedSettings.copyCustomTemplate.trim()) {
       migratedSettings.copyCustomTemplate = DEFAULT_COPY_CUSTOM_TEMPLATE;
-    } else if (migratedSettings.copyCustomTemplate.length > COPY_TEMPLATE_MAX_LENGTH) {
+    } else {
       migratedSettings.copyCustomTemplate = migratedSettings.copyCustomTemplate.slice(0, COPY_TEMPLATE_MAX_LENGTH);
+    }
+
+    if (
+      parsedSchemaVersion < 6
+      && migratedSettings.copyTemplateMode !== COPY_TEMPLATE_MODES.CUSTOM
+      && migratedSettings.copyCustomTemplate === LEGACY_DEFAULT_COPY_CUSTOM_TEMPLATE
+    ) {
+      migratedSettings.copyCustomTemplate = DEFAULT_COPY_CUSTOM_TEMPLATE;
+    }
+
+    if (migratedSettings.copyTemplateMode === COPY_TEMPLATE_MODES.CUSTOM && !migratedSettings.copyCustomTemplate.trim()) {
+      migratedSettings.copyTemplateMode = DEFAULT_SETTINGS.copyTemplateMode;
     }
 
     delete migratedSettings.copyWithLineNumbers;
@@ -348,12 +361,20 @@ function setThemeToggleState(isDarkTheme) {
   button.innerHTML = getThemeIconMarkup(isDarkTheme);
 }
 
-function getCurrentCopyTemplate() {
-  if (state.settings.copyTemplateMode === COPY_TEMPLATE_MODES.CUSTOM) {
+function hasSavedCustomCopyTemplate() {
+  return typeof state.settings.copyCustomTemplate === 'string' && state.settings.copyCustomTemplate.trim().length > 0;
+}
+
+function getTemplateForCopyMode(mode) {
+  if (mode === COPY_TEMPLATE_MODES.CUSTOM) {
     return state.settings.copyCustomTemplate || DEFAULT_COPY_CUSTOM_TEMPLATE;
   }
 
-  return COPY_TEMPLATE_PRESETS[state.settings.copyTemplateMode] || COPY_TEMPLATE_PRESETS[COPY_TEMPLATE_MODES.PLAIN];
+  return COPY_TEMPLATE_PRESETS[mode] || COPY_TEMPLATE_PRESETS[COPY_TEMPLATE_MODES.PLAIN];
+}
+
+function getCurrentCopyTemplate() {
+  return getTemplateForCopyMode(state.settings.copyTemplateMode);
 }
 
 function renderCopyTemplateLine(template, line, lineNumber) {
@@ -371,76 +392,108 @@ function renderCopyTemplateLine(template, line, lineNumber) {
   });
 }
 
+function setInputCaretToEnd(input) {
+  const caretPosition = input.value.length;
+  try {
+    input.setSelectionRange(caretPosition, caretPosition);
+  } catch (_error) {
+    // Some virtual keyboards can reject setSelectionRange for transient input states.
+  }
+}
+
+function updateCopyTemplateClearButton() {
+  elements.copyCustomTemplateClearButton.hidden = !state.copyCustomTemplateEditing || !elements.copyCustomTemplateInput.value;
+}
+
 function setCopyTemplateEditorOpen(isOpen, options = {}) {
   const open = Boolean(isOpen);
+  const { focusInput = false, keepValue = false } = options;
+
   state.copyCustomTemplateEditing = open;
-
   elements.copyTemplateControl.classList.toggle('is-editing', open);
-  elements.copyCustomTemplatePanel.setAttribute('aria-hidden', String(!open));
-  elements.copyCustomTemplateInput.tabIndex = open ? 0 : -1;
-  elements.copyCustomTemplateClearButton.tabIndex = open ? 0 : -1;
-
+  elements.copyCustomTemplateInput.readOnly = !open;
+  elements.copyTemplateEditButton.classList.toggle('is-active', open);
+  elements.copyTemplateEditButton.setAttribute('aria-pressed', String(open));
   if (open) {
-    const template = options.template ?? state.settings.copyCustomTemplate ?? DEFAULT_COPY_CUSTOM_TEMPLATE;
-    elements.copyCustomTemplateInput.value = template;
-    elements.copyTemplateControl.classList.remove('is-invalid');
+    elements.copyTemplateEditButton.hidden = true;
+  }
+
+  if (!keepValue) {
+    elements.copyCustomTemplateInput.value = getTemplateForCopyMode(state.settings.copyTemplateMode);
+  }
+
+  elements.copyTemplateControl.classList.remove('is-invalid');
+  updateCopyTemplateClearButton();
+
+  if (open && focusInput) {
     requestAnimationFrame(() => {
       elements.copyCustomTemplateInput.focus();
-      elements.copyCustomTemplateInput.select();
+      setInputCaretToEnd(elements.copyCustomTemplateInput);
     });
+  }
+}
+
+function openCopyCustomTemplateEditor(options = {}) {
+  const { focusInput = true, keepValue = false } = options;
+  state.copyCustomTemplateBeforeEdit = hasSavedCustomCopyTemplate()
+    ? state.settings.copyCustomTemplate
+    : DEFAULT_COPY_CUSTOM_TEMPLATE;
+  setCopyTemplateEditorOpen(true, { focusInput, keepValue });
+}
+
+function restoreCustomCopyTemplateBeforeEdit() {
+  elements.copyCustomTemplateInput.value = state.copyCustomTemplateBeforeEdit || DEFAULT_COPY_CUSTOM_TEMPLATE;
+  elements.copyTemplateControl.classList.remove('is-invalid');
+  setCopyTemplateEditorOpen(false, { keepValue: true });
+  updateCopyTemplateControls();
+}
+
+function saveCustomCopyTemplate() {
+  const templateValue = elements.copyCustomTemplateInput.value.slice(0, COPY_TEMPLATE_MAX_LENGTH);
+
+  if (!templateValue.trim()) {
+    elements.copyTemplateControl.classList.add('is-invalid');
+    setStatus('Inserisci un template custom non vuoto. Puoi usare \\riga, \\indice e \\n.');
+    elements.copyCustomTemplateInput.focus();
+    return false;
+  }
+
+  state.settings.copyTemplateMode = COPY_TEMPLATE_MODES.CUSTOM;
+  state.settings.copyCustomTemplate = templateValue;
+  saveSettings();
+  setCopyTemplateEditorOpen(false, { keepValue: true });
+  updateCopyTemplateControls();
+  setStatus('Template copia custom salvato.');
+  return true;
+}
+
+function setCopyTemplateMode(mode) {
+  if (!COPY_TEMPLATE_MODE_VALUES.has(mode)) {
     return;
   }
 
   elements.copyTemplateControl.classList.remove('is-invalid');
-}
 
-function openCopyCustomTemplateEditor(previousMode = state.settings.copyTemplateMode) {
-  state.copyTemplateModeBeforeEdit = previousMode;
-  elements.copyTemplateSelect.value = COPY_TEMPLATE_MODES.CUSTOM;
-  setCopyTemplateEditorOpen(true);
-}
+  if (mode === COPY_TEMPLATE_MODES.CUSTOM) {
+    state.settings.copyTemplateMode = COPY_TEMPLATE_MODES.CUSTOM;
+    elements.copyCustomTemplateInput.value = state.settings.copyCustomTemplate || DEFAULT_COPY_CUSTOM_TEMPLATE;
 
-function closeCopyCustomTemplateEditor(options = {}) {
-  const { restorePreviousMode = false } = options;
+    if (hasSavedCustomCopyTemplate()) {
+      saveSettings();
+      setCopyTemplateEditorOpen(false, { keepValue: true });
+      updateCopyTemplateControls();
+      return;
+    }
 
-  setCopyTemplateEditorOpen(false);
-
-  if (restorePreviousMode) {
-    const previousMode = COPY_TEMPLATE_MODE_VALUES.has(state.copyTemplateModeBeforeEdit)
-      ? state.copyTemplateModeBeforeEdit
-      : state.settings.copyTemplateMode;
-    elements.copyTemplateSelect.value = previousMode;
-  }
-
-  state.copyTemplateModeBeforeEdit = null;
-  syncControlStates();
-}
-
-function saveCustomCopyTemplate() {
-  const template = elements.copyCustomTemplateInput.value.trim();
-
-  if (!template) {
-    elements.copyTemplateControl.classList.add('is-invalid');
-    setStatus('Inserisci un template custom non vuoto. Puoi usare \\riga, \\indice e \\n.');
-    elements.copyCustomTemplateInput.focus();
-    return;
-  }
-
-  state.settings.copyTemplateMode = COPY_TEMPLATE_MODES.CUSTOM;
-  state.settings.copyCustomTemplate = template.slice(0, COPY_TEMPLATE_MAX_LENGTH);
-  saveSettings();
-  closeCopyCustomTemplateEditor();
-  setStatus('Template copia custom salvato.');
-}
-
-function setCopyTemplateMode(mode) {
-  if (!COPY_TEMPLATE_MODE_VALUES.has(mode) || mode === COPY_TEMPLATE_MODES.CUSTOM) {
+    openCopyCustomTemplateEditor({ focusInput: true, keepValue: true });
+    updateCopyTemplateControls();
     return;
   }
 
   state.settings.copyTemplateMode = mode;
   saveSettings();
-  closeCopyCustomTemplateEditor();
+  setCopyTemplateEditorOpen(false);
+  updateCopyTemplateControls();
 }
 
 function updateCopyTemplateControls() {
@@ -448,13 +501,20 @@ function updateCopyTemplateControls() {
     ? state.settings.copyTemplateMode
     : COPY_TEMPLATE_MODES.PLAIN;
 
-  if (!state.copyCustomTemplateEditing) {
-    elements.copyTemplateSelect.value = mode;
+  for (const button of elements.copyTemplateModeButtons) {
+    const isActive = button.dataset.copyTemplateMode === mode;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
   }
 
-  elements.copyTemplateEditButton.hidden = mode !== COPY_TEMPLATE_MODES.CUSTOM;
-  elements.copyCustomTemplateInput.tabIndex = state.copyCustomTemplateEditing ? 0 : -1;
-  elements.copyCustomTemplateClearButton.tabIndex = state.copyCustomTemplateEditing ? 0 : -1;
+  if (!state.copyCustomTemplateEditing) {
+    elements.copyCustomTemplateInput.value = getTemplateForCopyMode(mode);
+  }
+
+  const showEditButton = mode === COPY_TEMPLATE_MODES.CUSTOM && !state.copyCustomTemplateEditing && hasSavedCustomCopyTemplate();
+  elements.copyTemplateEditButton.hidden = !showEditButton;
+  elements.copyTemplateEditButton.setAttribute('aria-pressed', String(state.copyCustomTemplateEditing));
+  updateCopyTemplateClearButton();
 }
 
 function syncControlStates() {
@@ -567,6 +627,23 @@ function isScrollLinePanelOpen() {
   return Boolean(elements.scrollLinePanel && !elements.scrollLinePanel.hidden);
 }
 
+function updateScrollLineClearButton() {
+  if (!elements.scrollLineClearButton || !elements.scrollLineInput) {
+    return;
+  }
+
+  elements.scrollLineClearButton.hidden = !elements.scrollLineInput.value;
+}
+
+function setScrollLineButtonOpenState(isOpen) {
+  setPressedState(
+    elements.scrollLineButton,
+    Boolean(isOpen),
+    'Chiudi vai alla riga',
+    'Vai alla riga'
+  );
+}
+
 function openScrollLinePanel() {
   if (!state.sourceLines.length || !hasScrollableMarkdownDocument()) {
     return;
@@ -578,6 +655,8 @@ function openScrollLinePanel() {
   elements.scrollLinePanel.hidden = false;
   elements.scrollLineGroup.classList.add('is-open');
   elements.scrollLineButton.setAttribute('aria-expanded', 'true');
+  setScrollLineButtonOpenState(true);
+  updateScrollLineClearButton();
 
   requestAnimationFrame(() => elements.scrollLineInput.focus());
 }
@@ -590,6 +669,8 @@ function closeScrollLinePanel() {
   elements.scrollLinePanel.hidden = true;
   elements.scrollLineGroup?.classList.remove('is-open', 'is-invalid');
   elements.scrollLineButton?.setAttribute('aria-expanded', 'false');
+  setScrollLineButtonOpenState(false);
+  updateScrollLineClearButton();
 }
 
 function toggleScrollLinePanel() {
@@ -604,6 +685,7 @@ function toggleScrollLinePanel() {
 function clearScrollLineInput() {
   elements.scrollLineInput.value = '';
   elements.scrollLineGroup.classList.remove('is-invalid');
+  updateScrollLineClearButton();
   elements.scrollLineInput.focus();
 }
 
@@ -1714,6 +1796,13 @@ function copySelectedRange() {
   const from = Math.min(start, end);
   const to = Math.max(start, end);
   const template = getCurrentCopyTemplate();
+
+  if (!template.trim()) {
+    setStatus('Il template custom è vuoto: salvalo oppure scegli un altro formato copia.');
+    setCopyTemplateMode(COPY_TEMPLATE_MODES.CUSTOM);
+    return;
+  }
+
   const copyMode = COPY_TEMPLATE_STATUS_LABELS[state.settings.copyTemplateMode] || COPY_TEMPLATE_STATUS_LABELS[COPY_TEMPLATE_MODES.PLAIN];
   const content = state.sourceLines
     .slice(from - 1, to)
@@ -1722,7 +1811,8 @@ function copySelectedRange() {
 
   navigator.clipboard.writeText(content)
     .then(() => setStatus(`Copiate righe ${from}-${to} (${copyMode}).`))
-    .catch((error) => setStatus(`Copia non riuscita: ${error instanceof Error ? error.message : String(error)}`));
+    .catch((error) => setStatus(`Copia non riuscita: ${error instanceof Error ? error.message : String(error)}`))
+    .finally(() => elements.copyRangeButton.blur());
 }
 
 function highlightRenderedBlockForRange(start, end) {
@@ -2326,37 +2416,41 @@ function bindEvents() {
     applySettings();
   });
 
-  elements.copyTemplateSelect.addEventListener('change', () => {
-    const selectedMode = elements.copyTemplateSelect.value;
-
-    if (selectedMode === COPY_TEMPLATE_MODES.CUSTOM) {
-      openCopyCustomTemplateEditor(state.settings.copyTemplateMode);
-      return;
-    }
-
-    setCopyTemplateMode(selectedMode);
-    syncControlStates();
-  });
+  for (const button of elements.copyTemplateModeButtons) {
+    button.addEventListener('click', () => {
+      setCopyTemplateMode(button.dataset.copyTemplateMode);
+    });
+  }
 
   elements.copyTemplateEditButton.addEventListener('click', () => {
-    openCopyCustomTemplateEditor(COPY_TEMPLATE_MODES.CUSTOM);
+    openCopyCustomTemplateEditor({ focusInput: true, keepValue: true });
   });
 
   elements.copyCustomTemplateClearButton.addEventListener('click', () => {
     elements.copyCustomTemplateInput.value = '';
     elements.copyTemplateControl.classList.remove('is-invalid');
+    updateCopyTemplateClearButton();
     elements.copyCustomTemplateInput.focus();
   });
 
   elements.copyCustomTemplateInput.addEventListener('input', () => {
     elements.copyTemplateControl.classList.remove('is-invalid');
+    updateCopyTemplateClearButton();
   });
 
   elements.copyCustomTemplateInput.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
-      closeCopyCustomTemplateEditor({ restorePreviousMode: true });
+
+      if (!elements.copyCustomTemplateInput.value.trim() || !state.copyCustomTemplateBeforeEdit.trim()) {
+        elements.copyTemplateControl.classList.add('is-invalid');
+        setStatus('Salva un template custom non vuoto oppure scegli un altro formato copia.');
+        elements.copyCustomTemplateInput.focus();
+        return;
+      }
+
+      restoreCustomCopyTemplateBeforeEdit();
       return;
     }
 
@@ -2434,6 +2528,7 @@ function bindEvents() {
   });
   elements.scrollLineInput.addEventListener('input', () => {
     elements.scrollLineGroup.classList.remove('is-invalid');
+    updateScrollLineClearButton();
   });
   elements.scrollBottomButton.addEventListener('click', () => scrollMarkdownToEdge('bottom'));
 

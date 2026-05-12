@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.1.0-alpha.1**
+Versione corrente: **3.1.0-alpha.2**
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
@@ -79,11 +79,11 @@ La ricerca lavora solo nel Markdown renderizzato e ignora metadati, indice, sorg
 
 ## Template copia sorgente
 
-Nel pannello **Sorgente** il vecchio toggle “copia con numeri” è stato sostituito dal selettore **Formato copia**:
+Nel pannello **Sorgente** il vecchio toggle “copia con numeri” è stato sostituito da tre bottoni template accanto al comando **Copia**:
 
 - **Solo riga** copia ogni riga come testo originale.
 - **[indice]: riga** copia ogni riga nel formato `[numero]: contenuto`.
-- **Custom** permette di salvare un template personale.
+- **Custom** usa un template personale salvato dall’utente.
 
 Nel template custom sono disponibili placeholder case sensitive:
 
@@ -97,7 +97,7 @@ Esempio:
 [\indice]: \riga -->\n[\indice]: \riga
 ```
 
-Il campo custom è single-line, massimo 200 caratteri, con pulsante interno di pulizia. `Esc` annulla l’editing senza salvare, `Invio` salva un valore non vuoto e chiude il campo. Il formato selezionato e il template custom vengono mantenuti tra una sessione e l’altra.
+Sotto ai bottoni viene mostrato il template attivo: per i due preset è read-only, mentre per **Custom** diventa editabile quando non esiste ancora un template salvato oppure quando si usa la piccola matita di modifica. Il campo custom è single-line, massimo 200 caratteri, con pulsante interno di pulizia visibile solo quando contiene testo. `Esc` annulla l’editing senza salvare quando esiste un valore precedente, `Invio` salva solo un valore non vuoto. Il formato selezionato e il template custom vengono mantenuti tra una sessione e l’altra.
 
 ## Performance su file da qualche MB
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.1.0-alpha.2
+
+- Rifinita la UX del formato copia nel pannello **Sorgente**: il select è stato sostituito da tre bottoni template affiancati al bottone copia.
+- Il campo template sotto ai bottoni mostra sempre il formato attivo: read-only per **Solo riga** e **[indice]: riga**, modificabile solo per **Custom**.
+- Aggiunta modifica del template custom tramite icona `edit`, senza selezionare automaticamente il testo salvato.
+- Allineato il comportamento delle X di pulizia per template custom e “Vai alla riga”: compaiono solo con campo valorizzato.
+- Il bottone “Vai alla riga” mantiene lo stato attivo solo finché l’input è aperto; il bottone copia torna normale dopo la copia.
+- Aggiornato il subset self-hosted Material Symbols con `notes`, `edit_note` ed `edit`.
+
 ## 3.1.0-alpha.1
 
 - Sostituito il toggle “copia con numeri di riga” del pannello **Sorgente** con un selettore di template copia.

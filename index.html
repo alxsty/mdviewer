@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.1.0-alpha.1</span>
+          <span id="appVersion" class="brand-version">v3.1.0-alpha.2</span>
         </div>
 
         <div class="topbar-actions">
@@ -121,7 +121,7 @@
                 <div id="scrollLinePanel" class="scroll-line-panel" hidden>
                   <div class="scroll-line-field">
                     <input id="scrollLineInput" class="scroll-line-input" type="number" min="1" value="" inputmode="numeric" aria-label="Numero riga da raggiungere" placeholder="riga" />
-                    <button id="scrollLineClearButton" class="scroll-line-clear" type="button" title="Pulisci riga" aria-label="Pulisci riga">
+                    <button id="scrollLineClearButton" class="scroll-line-clear" type="button" title="Pulisci riga" aria-label="Pulisci riga" hidden>
               <span class="material-icon" aria-hidden="true">close</span>
             </button>
                   </div>
@@ -152,22 +152,25 @@
             <button id="copyRangeButton" class="icon-button copy-range-button" type="button" title="Copia righe selezionate" aria-label="Copia righe selezionate">
               <span class="material-icon" aria-hidden="true">content_copy</span>
             </button>
-            <div id="copyTemplateControl" class="copy-template-control">
-              <div class="copy-template-row">
-                <label class="visually-hidden" for="copyTemplateSelect">Formato copia</label>
-                <select id="copyTemplateSelect" class="copy-template-select" aria-label="Formato copia righe sorgente" title="Formato copia">
-                  <option value="plain">Solo riga</option>
-                  <option value="numbered">[indice]: riga</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <button id="copyTemplateEditButton" class="icon-button copy-template-edit-button" type="button" title="Modifica template custom" aria-label="Modifica template custom" hidden>
-                  <span class="material-icon" aria-hidden="true">text_fields</span>
+            <div id="copyTemplateControl" class="copy-template-control" aria-label="Formato copia righe sorgente">
+              <div class="copy-template-buttons" role="group" aria-label="Formato copia">
+                <button id="copyTemplatePlainButton" class="icon-button copy-template-mode-button" type="button" data-copy-template-mode="plain" title="Copia solo il testo della riga" aria-label="Template copia: solo riga" aria-pressed="false">
+                  <span class="material-icon" aria-hidden="true">notes</span>
+                </button>
+                <button id="copyTemplateNumberedButton" class="icon-button copy-template-mode-button" type="button" data-copy-template-mode="numbered" title="Copia con indice riga" aria-label="Template copia: con indice riga" aria-pressed="false">
+                  <span class="material-icon" aria-hidden="true">123</span>
+                </button>
+                <button id="copyTemplateCustomButton" class="icon-button copy-template-mode-button" type="button" data-copy-template-mode="custom" title="Copia con template custom" aria-label="Template copia: custom" aria-pressed="false">
+                  <span class="material-icon" aria-hidden="true">edit_note</span>
                 </button>
               </div>
-              <div id="copyCustomTemplatePanel" class="copy-template-panel" aria-hidden="true">
+              <div id="copyCustomTemplatePanel" class="copy-template-panel" aria-hidden="false">
                 <div class="copy-template-field">
-                  <input id="copyCustomTemplateInput" class="copy-template-input" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Usa \riga, \indice, \n" aria-label="Template custom formato copia" />
-                  <button id="copyCustomTemplateClearButton" class="copy-template-clear" type="button" title="Pulisci template" aria-label="Pulisci template">
+                  <input id="copyCustomTemplateInput" class="copy-template-input" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Usa \riga, \indice, \n" aria-label="Template formato copia" readonly />
+                  <button id="copyTemplateEditButton" class="copy-template-edit-button" type="button" title="Modifica template custom" aria-label="Modifica template custom" hidden>
+                    <span class="material-icon" aria-hidden="true">edit</span>
+                  </button>
+                  <button id="copyCustomTemplateClearButton" class="copy-template-clear" type="button" title="Pulisci template" aria-label="Pulisci template" hidden>
                     <span class="material-icon" aria-hidden="true">close</span>
                   </button>
                 </div>
