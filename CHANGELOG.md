@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0
+
+- Release stabile della V3.
+- Consolidata la gestione del file collegato tramite File System Access API dove supportata.
+- Confermate icone Material Symbols self-hosted e icone PWA PNG compatibili con desktop, tablet e smartphone.
+- Consolidati layout mobile/tablet/desktop, installazione PWA, aggiornamento via service worker, ricerca, pannello Sorgente e navigazione rapida.
+
 ## 3.0.0-alpha.21
 
 - Sostituite le icone SVG del manifest con icone PNG per migliorare la compatibilità con Windows 11 e le integrazioni desktop.
