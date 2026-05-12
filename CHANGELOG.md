@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0-alpha.19
+
+- Rifinito il layout mobile della topbar quando il bottone **Installa** è visibile nel browser: pulsanti più compatti, gap ridotto e nessun debordo laterale su smartphone stretti.
+- Mantenuto invariato il layout quando la PWA è installata e il bottone **Installa** è nascosto.
+
 ## 3.0.0-alpha.18
 
 - Irrobustito il flusso di aggiornamento PWA: dopo il click su **Aggiorna** il banner passa a “Aggiornamento in corso…” e forza un reload di fallback se `controllerchange` non arriva.

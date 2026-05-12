@@ -2153,3 +2153,64 @@ body.line-numbers .markdown-body [data-line-start]::before {
     padding-left: 0.66rem;
   }
 }
+
+/* Extra-compact mobile topbar: keeps the install button inside the viewport
+   when the app is opened in the browser before installation. */
+@media (max-width: 520px) {
+  .topbar {
+    gap: 0.45rem;
+    padding-inline: max(0.45rem, env(safe-area-inset-left)) max(0.45rem, env(safe-area-inset-right));
+    overflow: hidden;
+  }
+
+  .brand {
+    flex: 0 0 auto;
+    gap: 0;
+  }
+
+  .brand-mark {
+    width: 2.08rem;
+    height: 2.08rem;
+    border-radius: 0.72rem;
+    font-size: 0.78rem;
+  }
+
+  .topbar-actions {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: clamp(0.28rem, 1.45vw, 0.48rem);
+  }
+
+  .topbar-actions .icon-button,
+  .topbar-actions .icon-file-button .button-symbol {
+    width: clamp(2rem, 9.2vw, 2.25rem);
+    height: clamp(2rem, 9.2vw, 2.25rem);
+    min-height: 0;
+  }
+
+  .topbar-actions .material-icon {
+    font-size: clamp(1.05rem, 4.9vw, 1.28rem);
+  }
+
+  .topbar-actions .numeric-icon-button .material-icon {
+    font-size: clamp(0.74rem, 3.4vw, 0.9rem);
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar-actions {
+    gap: 0.25rem;
+  }
+
+  .brand-mark {
+    width: 1.95rem;
+    height: 1.95rem;
+  }
+
+  .topbar-actions .icon-button,
+  .topbar-actions .icon-file-button .button-symbol {
+    width: 1.92rem;
+    height: 1.92rem;
+  }
+}
