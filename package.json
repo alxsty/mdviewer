@@ -1,6 +1,6 @@
 {
   "name": "pwa-markdown-viewer",
-  "version": "3.1.0-alpha.4",
+  "version": "3.1.0-alpha.5",
   "private": true,
   "description": "Installable PWA Markdown viewer with TOC, YAML frontmatter cards, source line tools, themes and font controls.",
   "type": "module",

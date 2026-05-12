@@ -1495,6 +1495,12 @@ body.line-numbers .markdown-body [data-line-start]::before {
   color: var(--muted);
 }
 
+.copy-template-input:not([readonly]) {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 [data-theme="light"] .copy-template-input {
   background: transparent;
 }

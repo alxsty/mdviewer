@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.0-alpha.5
+
+- Corretto il focus dell'editor del template custom su tablet/touch: la matita ora rende il campo realmente editabile e apre la tastiera virtuale.
+- Il cursore del template custom viene posizionato in fondo senza selezionare il testo, mantenendo il focus anche dopo il passaggio da read-only a editabile.
+
 ## 3.1.0-alpha.4
 
 - Compattato il layout del pannello **Sorgente**: i campi del range righe ora hanno larghezza fissa ottimizzata per 5 cifre.

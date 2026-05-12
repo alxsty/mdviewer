@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.4';
+const APP_VERSION = '3.1.0-alpha.5';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 6;
@@ -411,6 +411,28 @@ function setInputCaretToEnd(input) {
   }
 }
 
+function focusCopyCustomTemplateInput() {
+  // Mobile browsers usually open the virtual keyboard only when focus happens
+  // synchronously inside the user gesture that enabled the input. Keep the
+  // requestAnimationFrame pass only as a caret/layout refinement.
+  try {
+    elements.copyCustomTemplateInput.focus({ preventScroll: true });
+  } catch (_error) {
+    elements.copyCustomTemplateInput.focus();
+  }
+
+  setInputCaretToEnd(elements.copyCustomTemplateInput);
+
+  requestAnimationFrame(() => {
+    try {
+      elements.copyCustomTemplateInput.focus({ preventScroll: true });
+    } catch (_error) {
+      elements.copyCustomTemplateInput.focus();
+    }
+    setInputCaretToEnd(elements.copyCustomTemplateInput);
+  });
+}
+
 function updateCopyTemplateClearButton() {
   elements.copyCustomTemplateClearButton.hidden = !state.copyCustomTemplateEditing || !elements.copyCustomTemplateInput.value;
 }
@@ -436,10 +458,7 @@ function setCopyTemplateEditorOpen(isOpen, options = {}) {
   updateCopyTemplateClearButton();
 
   if (open && focusInput) {
-    requestAnimationFrame(() => {
-      elements.copyCustomTemplateInput.focus();
-      setInputCaretToEnd(elements.copyCustomTemplateInput);
-    });
+    focusCopyCustomTemplateInput();
   }
 }
 
@@ -2437,8 +2456,13 @@ function bindEvents() {
     });
   }
 
-  elements.copyTemplateEditButton.addEventListener('click', () => {
-    openCopyCustomTemplateEditor({ focusInput: true, keepValue: true });
+  elements.copyTemplateEditButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (!state.copyCustomTemplateEditing) {
+      openCopyCustomTemplateEditor({ focusInput: true, keepValue: true });
+    } else {
+      focusCopyCustomTemplateInput();
+    }
   });
 
   elements.copyCustomTemplateClearButton.addEventListener('click', () => {
@@ -2451,6 +2475,12 @@ function bindEvents() {
   elements.copyCustomTemplateInput.addEventListener('input', () => {
     elements.copyTemplateControl.classList.remove('is-invalid');
     updateCopyTemplateClearButton();
+  });
+
+  elements.copyCustomTemplateInput.addEventListener('pointerdown', () => {
+    if (state.copyCustomTemplateEditing && !elements.copyCustomTemplateInput.readOnly) {
+      elements.copyCustomTemplateInput.focus();
+    }
   });
 
   elements.copyCustomTemplateInput.addEventListener('keydown', (event) => {
