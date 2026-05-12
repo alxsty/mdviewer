@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.0-alpha.1
+
+- Sostituito il toggle “copia con numeri di riga” del pannello **Sorgente** con un selettore di template copia.
+- Aggiunti i template predefiniti **Solo riga** e **[indice]: riga**.
+- Aggiunto il template **Custom** con placeholder `\riga`, `\indice` e `\n`, input contestuale animato, pulizia rapida, salvataggio con Invio e annullamento con Esc.
+- Persistiti formato copia selezionato e template custom in `localStorage`, con migrazione automatica dal vecchio toggle `copyWithLineNumbers`.
+
 ## 3.0.0
 
 - Release stabile della V3.

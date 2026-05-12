@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.0.0**
+Versione corrente: **3.1.0-alpha.1**
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
@@ -19,7 +19,7 @@ Versione corrente: **3.0.0**
 - commenti HTML `<!-- ... -->` esclusi dal render Markdown, ma ancora visibili nel pannello sorgente
 - numeri di linea on/off sui blocchi renderizzati
 - pannello **Sorgente** con virtualizzazione, adatto a file Markdown di qualche MB
-- selezione intervallo righe e copia con/senza prefisso `[numero]: `
+- selezione intervallo righe e copia tramite template: solo riga, `[indice]: riga` o formato custom con placeholder `\riga`, `\indice`, `\n`
 - click su blocco renderizzato per selezionare le righe sorgente corrispondenti
 - doppio click su blocco renderizzato per copiare subito il blocco
 - tema chiaro/scuro
@@ -76,6 +76,28 @@ Il bottone di ricerca apre una toolbar compatta stile “find”:
 - evidenza più forte sull’occorrenza corrente
 
 La ricerca lavora solo nel Markdown renderizzato e ignora metadati, indice, sorgente raw, toolbar e numeri di riga.
+
+## Template copia sorgente
+
+Nel pannello **Sorgente** il vecchio toggle “copia con numeri” è stato sostituito dal selettore **Formato copia**:
+
+- **Solo riga** copia ogni riga come testo originale.
+- **[indice]: riga** copia ogni riga nel formato `[numero]: contenuto`.
+- **Custom** permette di salvare un template personale.
+
+Nel template custom sono disponibili placeholder case sensitive:
+
+- `\riga` = contenuto della riga
+- `\indice` = numero della riga sorgente
+- `\n` = newline reale
+
+Esempio:
+
+```text
+[\indice]: \riga -->\n[\indice]: \riga
+```
+
+Il campo custom è single-line, massimo 200 caratteri, con pulsante interno di pulizia. `Esc` annulla l’editing senza salvare, `Invio` salva un valore non vuoto e chiude il campo. Il formato selezionato e il template custom vengono mantenuti tra una sessione e l’altra.
 
 ## Performance su file da qualche MB
 

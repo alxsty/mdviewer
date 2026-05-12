@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.0.0</span>
+          <span id="appVersion" class="brand-version">v3.1.0-alpha.1</span>
         </div>
 
         <div class="topbar-actions">
@@ -152,9 +152,27 @@
             <button id="copyRangeButton" class="icon-button copy-range-button" type="button" title="Copia righe selezionate" aria-label="Copia righe selezionate">
               <span class="material-icon" aria-hidden="true">content_copy</span>
             </button>
-            <button id="copyWithLineNumbersToggle" class="icon-button numeric-icon-button source-copy-toggle" type="button" title="Copia con numeri di riga" aria-label="Copia con numeri di riga" aria-pressed="false">
-              <span class="material-icon" aria-hidden="true">123</span>
-            </button>
+            <div id="copyTemplateControl" class="copy-template-control">
+              <div class="copy-template-row">
+                <label class="visually-hidden" for="copyTemplateSelect">Formato copia</label>
+                <select id="copyTemplateSelect" class="copy-template-select" aria-label="Formato copia righe sorgente" title="Formato copia">
+                  <option value="plain">Solo riga</option>
+                  <option value="numbered">[indice]: riga</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <button id="copyTemplateEditButton" class="icon-button copy-template-edit-button" type="button" title="Modifica template custom" aria-label="Modifica template custom" hidden>
+                  <span class="material-icon" aria-hidden="true">text_fields</span>
+                </button>
+              </div>
+              <div id="copyCustomTemplatePanel" class="copy-template-panel" aria-hidden="true">
+                <div class="copy-template-field">
+                  <input id="copyCustomTemplateInput" class="copy-template-input" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Usa \riga, \indice, \n" aria-label="Template custom formato copia" />
+                  <button id="copyCustomTemplateClearButton" class="copy-template-clear" type="button" title="Pulisci template" aria-label="Pulisci template">
+                    <span class="material-icon" aria-hidden="true">close</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <p class="small-note">Click/tap su una riga o su un blocco renderizzato per agganciare le righe sorgente. Shift+click estende l’intervallo; su touch usa long press su un blocco e poi tap su un altro.</p>
