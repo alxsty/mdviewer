@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.2';
+const APP_VERSION = '3.1.0-alpha.3';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 6;
@@ -390,6 +390,16 @@ function renderCopyTemplateLine(template, line, lineNumber) {
         return token;
     }
   });
+}
+
+function resetCopyRangeButtonState() {
+  if (!elements.copyRangeButton) {
+    return;
+  }
+
+  elements.copyRangeButton.classList.remove('is-active');
+  elements.copyRangeButton.setAttribute('aria-pressed', 'false');
+  elements.copyRangeButton.blur();
 }
 
 function setInputCaretToEnd(input) {
@@ -1809,10 +1819,15 @@ function copySelectedRange() {
     .map((line, index) => renderCopyTemplateLine(template, line, from + index))
     .join('\n');
 
+  resetCopyRangeButtonState();
+
   navigator.clipboard.writeText(content)
     .then(() => setStatus(`Copiate righe ${from}-${to} (${copyMode}).`))
     .catch((error) => setStatus(`Copia non riuscita: ${error instanceof Error ? error.message : String(error)}`))
-    .finally(() => elements.copyRangeButton.blur());
+    .finally(() => {
+      resetCopyRangeButtonState();
+      window.setTimeout(resetCopyRangeButtonState, 120);
+    });
 }
 
 function highlightRenderedBlockForRange(start, end) {
@@ -2469,7 +2484,15 @@ function bindEvents() {
     setSelectedLineRange(elements.lineFromInput.value, elements.lineToInput.value, { updateBlock: true });
   });
 
-  elements.copyRangeButton.addEventListener('click', copySelectedRange);
+  elements.copyRangeButton.addEventListener('click', () => {
+    resetCopyRangeButtonState();
+    copySelectedRange();
+  });
+  elements.copyRangeButton.addEventListener('pointerup', () => {
+    window.setTimeout(resetCopyRangeButtonState, 0);
+  });
+  elements.copyRangeButton.addEventListener('pointercancel', resetCopyRangeButtonState);
+  elements.copyRangeButton.addEventListener('mouseleave', resetCopyRangeButtonState);
 
   elements.sourceViewport.addEventListener('scroll', () => requestAnimationFrame(updateSourceVirtualList));
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.0-alpha.3
+
+- Rifinito il layout del pannello **Sorgente** su tablet: i tre bottoni del formato copia restano sulla stessa riga del bottone **Copia**, con il campo template nella riga sotto.
+- Reso trasparente lo sfondo del gruppo formato copia e del campo template, così si integrano meglio con il box **Sorgente**.
+- Allineato lo stato attivo del comando **Vai alla riga** allo stile del pulsante ricerca quando il campo riga è aperto.
+- Reso più robusto il reset visuale del bottone **Copia**, che torna sempre allo stato normale dopo click/tap o copia da shortcut.
+
 ## 3.1.0-alpha.2
 
 - Rifinita la UX del formato copia nel pannello **Sorgente**: il select è stato sostituito da tre bottoni template affiancati al bottone copia.
