@@ -30,7 +30,8 @@ function mdViewerBuildVariantPlugin(mode) {
       }
 
       return html
-        .replace('href="./icons/icon-192.svg"', 'href="./icons/icon-dev-192.svg"')
+        .replace('href="./icons/icon-192.png"', 'href="./icons/icon-dev-192.png"')
+        .replace('href="./icons/favicon.ico"', 'href="./icons/favicon-dev.ico"')
         .replace('<title>Markdown Viewer PWA</title>', '<title>Markdown Viewer DEV</title>');
     },
 
@@ -50,16 +51,40 @@ function mdViewerBuildVariantPlugin(mode) {
       manifest.description = 'Versione dev/WIP del visualizzatore Markdown installabile.';
       manifest.icons = [
         {
-          src: './icons/icon-dev-192.svg',
+          src: './icons/icon-dev-192.png',
           sizes: '192x192',
-          type: 'image/svg+xml',
-          purpose: 'any maskable'
+          type: 'image/png',
+          purpose: 'any'
         },
         {
-          src: './icons/icon-dev-512.svg',
+          src: './icons/icon-dev-256.png',
+          sizes: '256x256',
+          type: 'image/png',
+          purpose: 'any'
+        },
+        {
+          src: './icons/icon-dev-384.png',
+          sizes: '384x384',
+          type: 'image/png',
+          purpose: 'any'
+        },
+        {
+          src: './icons/icon-dev-512.png',
           sizes: '512x512',
-          type: 'image/svg+xml',
-          purpose: 'any maskable'
+          type: 'image/png',
+          purpose: 'any'
+        },
+        {
+          src: './icons/icon-dev-maskable-192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'maskable'
+        },
+        {
+          src: './icons/icon-dev-maskable-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable'
         }
       ];
 

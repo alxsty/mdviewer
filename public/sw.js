@@ -1,10 +1,22 @@
-const APP_VERSION = '3.0.0-alpha.20';
+const APP_VERSION = '3.0.0-alpha.21';
 const CACHE_VERSION = `md-viewer-v${APP_VERSION}`;
 const APP_SHELL = [
   './index.html',
   './manifest.webmanifest',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg'
+  './icons/favicon.ico',
+  './icons/favicon-dev.ico',
+  './icons/icon-192.png',
+  './icons/icon-256.png',
+  './icons/icon-384.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
+  './icons/icon-dev-192.png',
+  './icons/icon-dev-256.png',
+  './icons/icon-dev-384.png',
+  './icons/icon-dev-512.png',
+  './icons/icon-dev-maskable-192.png',
+  './icons/icon-dev-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {

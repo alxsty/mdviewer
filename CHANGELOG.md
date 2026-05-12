@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0-alpha.21
+
+- Sostituite le icone SVG del manifest con icone PNG per migliorare la compatibilità con Windows 11 e le integrazioni desktop.
+- Aggiunte icone PNG standard `any` 192/256/384/512 e icone PNG `maskable` 192/512 per stable e dev.
+- Aggiunti fallback `favicon.ico` e `favicon-dev.ico`.
+- Aggiornato il manifest dev generato in build per usare le icone PNG con badge DEV.
+- Aggiornata la cache del service worker per includere le nuove icone PNG/ICO.
+
 ## 3.0.0-alpha.20
 
 - Il bottone **Installa** viene mostrato solo quando il browser fornisce un prompt di installazione reale (`beforeinstallprompt`).
