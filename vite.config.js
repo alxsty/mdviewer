@@ -1,3 +1,5 @@
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
@@ -14,6 +16,56 @@ function resolveBase(mode) {
   }
 
   return './';
+}
+
+function mdViewerBuildVariantPlugin(mode) {
+  const isDevPagesBuild = mode === 'github-pages-dev';
+
+  return {
+    name: 'mdviewer-build-variant',
+
+    transformIndexHtml(html) {
+      if (!isDevPagesBuild) {
+        return html;
+      }
+
+      return html
+        .replace('href="./icons/icon-192.svg"', 'href="./icons/icon-dev-192.svg"')
+        .replace('<title>Markdown Viewer PWA</title>', '<title>Markdown Viewer DEV</title>');
+    },
+
+    closeBundle() {
+      if (!isDevPagesBuild) {
+        return;
+      }
+
+      const manifestPath = resolve(process.cwd(), 'dist', 'manifest.webmanifest');
+      if (!existsSync(manifestPath)) {
+        return;
+      }
+
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      manifest.name = 'Markdown Viewer DEV';
+      manifest.short_name = 'MD Dev';
+      manifest.description = 'Versione dev/WIP del visualizzatore Markdown installabile.';
+      manifest.icons = [
+        {
+          src: './icons/icon-dev-192.svg',
+          sizes: '192x192',
+          type: 'image/svg+xml',
+          purpose: 'any maskable'
+        },
+        {
+          src: './icons/icon-dev-512.svg',
+          sizes: '512x512',
+          type: 'image/svg+xml',
+          purpose: 'any maskable'
+        }
+      ];
+
+      writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    }
+  };
 }
 
 export default defineConfig(({ mode }) => {
@@ -34,7 +86,10 @@ export default defineConfig(({ mode }) => {
      */
     base: resolveBase(mode),
 
-    plugins: mode === 'https-dev' ? [basicSsl()] : [],
+    plugins: [
+      ...(mode === 'https-dev' ? [basicSsl()] : []),
+      mdViewerBuildVariantPlugin(mode)
+    ],
 
     build: {
       target: 'es2022',

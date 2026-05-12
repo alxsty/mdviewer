@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.0.0-alpha.19';
+const APP_VERSION = '3.0.0-alpha.20';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 4;
@@ -1755,13 +1755,12 @@ function updateInstallButtonVisibility() {
     return;
   }
 
-  // L'informazione appinstalled resta nel localStorage dell'origine anche dopo
-  // una disinstallazione manuale della PWA. Per evitare falsi positivi su Android,
-  // il bottone custom viene nascosto solo quando la pagina è davvero avviata in
-  // display-mode standalone/fullscreen. Nel browser resta visibile e, se Chrome
-  // non fornisce beforeinstallprompt, mostra il fallback testuale.
+  // Fuori dalla modalità PWA installata non usiamo stati persistenti: Chrome può
+  // mantenere localStorage anche dopo una disinstallazione manuale. Il bottone
+  // custom è utile solo quando esiste un prompt installabile reale; se Chrome
+  // propone già “Open in app” o non espone beforeinstallprompt, resta nascosto.
   localStorage.removeItem(INSTALL_STATE_KEY);
-  elements.installButton.hidden = false;
+  elements.installButton.hidden = !state.deferredInstallPrompt;
 }
 
 function requestServiceWorkerVersion(worker) {
@@ -1993,17 +1992,16 @@ function bindInstallFlow() {
     }
 
     if (!state.deferredInstallPrompt) {
-      showToast('Per installare, usa l’icona Installa di Chrome nella barra indirizzi o il menu del browser.', {
-        kind: 'info',
-        timeoutMs: 7200
-      });
-      setStatus('Prompt installazione non disponibile: usa l’icona Installa di Chrome.');
+      updateInstallButtonVisibility();
       return;
     }
 
-    state.deferredInstallPrompt.prompt();
-    await state.deferredInstallPrompt.userChoice;
+    const promptEvent = state.deferredInstallPrompt;
     state.deferredInstallPrompt = null;
+    updateInstallButtonVisibility();
+
+    promptEvent.prompt();
+    await promptEvent.userChoice;
     updateInstallButtonVisibility();
   });
 }

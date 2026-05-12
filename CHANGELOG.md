@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.20
+
+- Il bottone **Installa** viene mostrato solo quando il browser fornisce un prompt di installazione reale (`beforeinstallprompt`).
+- Nel browser, se la PWA è già installata e Chrome propone **Open in app**, il bottone installazione custom resta nascosto.
+- Aggiunte icone DEV dedicate per la build `/mdviewer/dev/` e manifest dev differenziato.
+
 ## 3.0.0-alpha.19
 
 - Rifinito il layout mobile della topbar quando il bottone **Installa** è visibile nel browser: pulsanti più compatti, gap ridotto e nessun debordo laterale su smartphone stretti.
