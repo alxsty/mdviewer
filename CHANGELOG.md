@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0-alpha.8
+
+- Corretto il loop della richiesta autorizzazioni File System Access API su smartphone: i controlli passivi da focus/visibility non riaprono più il toast di autorizzazione e vengono messi in pausa dopo una richiesta permessi o dopo la chiusura del file.
+- La chiusura file ora rimuove anche eventuali toast di autorizzazione pendenti, evitando che interferiscano con l’azione appena eseguita.
+- Rimossi gli spin button dai campi **Da/A** del pannello sorgente e dal campo **Vai alla riga**, mantenendo tastiera numerica su touch tramite `inputmode`.
+
 ## 3.1.0-alpha.7
 
 - Allineata la larghezza del pannello sorgente mobile/tablet a quella del reader Markdown.

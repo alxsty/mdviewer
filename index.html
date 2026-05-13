@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.1.0-alpha.7</span>
+          <span id="appVersion" class="brand-version">v3.1.0-alpha.8</span>
         </div>
 
         <div class="topbar-actions">
@@ -120,7 +120,7 @@
               <div id="scrollLineGroup" class="scroll-line-group">
                 <div id="scrollLinePanel" class="scroll-line-panel" hidden>
                   <div class="scroll-line-field">
-                    <input id="scrollLineInput" class="scroll-line-input" type="number" min="1" value="" inputmode="numeric" aria-label="Numero riga da raggiungere" placeholder="riga" />
+                    <input id="scrollLineInput" class="scroll-line-input" type="text" min="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Numero riga da raggiungere" placeholder="riga" />
                     <button id="scrollLineClearButton" class="scroll-line-clear" type="button" title="Pulisci riga" aria-label="Pulisci riga" hidden>
               <span class="material-icon" aria-hidden="true">close</span>
             </button>
@@ -145,9 +145,9 @@
 
           <div class="line-tools">
             <div class="source-range-control" aria-label="Intervallo righe sorgente">
-              <input id="lineFromInput" class="source-range-input" type="number" min="1" value="1" aria-label="Riga iniziale" title="Riga iniziale" />
+              <input id="lineFromInput" class="source-range-input" type="text" min="1" value="1" inputmode="numeric" pattern="[0-9]*" aria-label="Riga iniziale" title="Riga iniziale" />
               <span class="source-range-separator material-icon" aria-hidden="true">arrow_forward</span>
-              <input id="lineToInput" class="source-range-input" type="number" min="1" value="1" aria-label="Riga finale" title="Riga finale" />
+              <input id="lineToInput" class="source-range-input" type="text" min="1" value="1" inputmode="numeric" pattern="[0-9]*" aria-label="Riga finale" title="Riga finale" />
             </div>
             <button id="copyRangeButton" class="icon-button copy-range-button" type="button" title="Copia righe selezionate" aria-label="Copia righe selezionate">
               <span class="material-icon" aria-hidden="true">content_copy</span>

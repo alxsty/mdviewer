@@ -3,9 +3,12 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.7';
+const APP_VERSION = '3.1.0-alpha.8';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
+const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
+const FILE_BINDING_PASSIVE_CHECK_PAUSE_MS = 30_000;
+const FILE_BINDING_CLOSE_PAUSE_MS = 2_000;
 const SETTINGS_SCHEMA_VERSION = 6;
 const INSTALL_STATE_KEY = `md-viewer-install-state:${import.meta.env.BASE_URL}`;
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
@@ -158,6 +161,10 @@ const state = {
   serviceWorkerUpdateAvailable: false,
   serviceWorkerUpdatePromptVisible: false,
   fileBindingPermissionDeferredForUpdate: false,
+  fileBindingPermissionPromptInProgress: false,
+  lastFileBindingPermissionToastAt: 0,
+  lastFileBindingPermissionGrantAt: 0,
+  fileBindingChecksPausedUntil: 0,
   copyCustomTemplateEditing: false,
   copyCustomTemplateBeforeEdit: DEFAULT_COPY_CUSTOM_TEMPLATE
 };
@@ -277,6 +284,38 @@ function isServiceWorkerUpdatePending() {
     || state.serviceWorkerUpdatePromptVisible
     || document.querySelector('[data-update-banner="true"]')
   );
+}
+
+function isPassiveFileBindingReason(reason) {
+  return reason === 'focus' || reason === 'visible' || reason === 'online';
+}
+
+function shouldPauseFileBindingCheck() {
+  return Boolean(
+    state.fileBindingPermissionPromptInProgress
+    || state.filePickerFallbackOpening
+    || Date.now() < state.fileBindingChecksPausedUntil
+  );
+}
+
+function pausePassiveFileBindingChecks(durationMs = FILE_BINDING_PASSIVE_CHECK_PAUSE_MS) {
+  state.fileBindingChecksPausedUntil = Math.max(
+    state.fileBindingChecksPausedUntil,
+    Date.now() + durationMs
+  );
+}
+
+function shouldShowFileBindingPermissionToast(reason, requestPermission) {
+  if (requestPermission || isPassiveFileBindingReason(reason)) {
+    return false;
+  }
+
+  const now = Date.now();
+  if (now - state.lastFileBindingPermissionGrantAt < FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS) {
+    return false;
+  }
+
+  return now - state.lastFileBindingPermissionToastAt >= FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS;
 }
 
 function showToast(message, options = {}) {
@@ -1251,7 +1290,17 @@ async function ensureFileReadPermission(handle, options = {}) {
   }
 
   if (requestPermission && typeof handle.requestPermission === 'function') {
-    permission = await handle.requestPermission({ mode: 'read' });
+    state.fileBindingPermissionPromptInProgress = true;
+    try {
+      permission = await handle.requestPermission({ mode: 'read' });
+      if (permission === 'granted') {
+        state.lastFileBindingPermissionGrantAt = Date.now();
+        pausePassiveFileBindingChecks();
+      }
+    } finally {
+      state.fileBindingPermissionPromptInProgress = false;
+      pausePassiveFileBindingChecks(1_000);
+    }
   }
 
   return permission;
@@ -1316,6 +1365,8 @@ function resetDocumentToEmptyState() {
 
 async function closeCurrentFile() {
   state.parseRequestId += 1;
+  pausePassiveFileBindingChecks(FILE_BINDING_CLOSE_PAUSE_MS);
+  dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
   await clearStoredFileBinding();
   resetDocumentToEmptyState();
   setStatus('File chiuso.');
@@ -1669,6 +1720,10 @@ async function restoreLastLinkedFile(options = {}) {
     return false;
   }
 
+  if (!force && shouldPauseFileBindingCheck()) {
+    return false;
+  }
+
   if (state.fileBindingRestoreInProgress || state.fileBindingCheckInProgress) {
     if (reason === 'manual') {
       window.setTimeout(() => {
@@ -1706,6 +1761,8 @@ async function restoreLastLinkedFile(options = {}) {
         statusPrefix: reason === 'startup' ? 'Ripristino' : 'Aggiornamento file',
         requestPermission
       });
+      dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
+      pausePassiveFileBindingChecks();
       setStatus(`File collegato aggiornato dal dispositivo: ${file.name}.`);
       return true;
     } catch (error) {
@@ -1717,17 +1774,28 @@ async function restoreLastLinkedFile(options = {}) {
           return false;
         }
 
+        if (requestPermission) {
+          pausePassiveFileBindingChecks();
+          dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
+          setStatus('Autorizzazione file non concessa. Il collegamento è stato mantenuto.');
+          return false;
+        }
+
         const message = 'Il file collegato richiede una nuova autorizzazione. Il collegamento è stato mantenuto.';
         setStatus(message);
-        showToast(message, {
-          kind: 'info',
-          timeoutMs: 12000,
-          actionLabel: 'Autorizza',
-          tag: FILE_BINDING_PERMISSION_TOAST_TAG,
-          onAction: () => {
-            void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual' });
-          }
-        });
+
+        if (shouldShowFileBindingPermissionToast(reason, requestPermission)) {
+          state.lastFileBindingPermissionToastAt = Date.now();
+          showToast(message, {
+            kind: 'info',
+            timeoutMs: 12000,
+            actionLabel: 'Autorizza',
+            tag: FILE_BINDING_PERMISSION_TOAST_TAG,
+            onAction: () => {
+              void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual' });
+            }
+          });
+        }
         return false;
       }
 

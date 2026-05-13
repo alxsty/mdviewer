@@ -1376,16 +1376,32 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .source-range-control .source-range-input {
   width: 3.85rem;
+  height: 2.25rem;
   flex: 0 0 3.85rem;
   min-width: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.7rem;
+  background: var(--surface-alt);
+  color: var(--text);
   padding-inline: 0.35rem;
+  font: inherit;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
 .source-range-input::-webkit-outer-spin-button,
-.source-range-input::-webkit-inner-spin-button {
+.source-range-input::-webkit-inner-spin-button,
+.scroll-line-input::-webkit-outer-spin-button,
+.scroll-line-input::-webkit-inner-spin-button {
   margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.source-range-input,
+.scroll-line-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 .source-range-separator {
@@ -2189,7 +2205,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
 .scroll-line-input {
   width: 6.45rem;
   height: 1.95rem;
-  padding: 0 2.55rem 0 0.7rem;
+  padding: 0 2.2rem 0 0.7rem;
   border: 1px solid var(--panel-border);
   border-radius: 999px;
   background: rgba(2, 6, 23, 0.2);
@@ -2247,11 +2263,6 @@ body.line-numbers .markdown-body [data-line-start]::before {
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
 }
 
-.scroll-line-input::-webkit-outer-spin-button,
-.scroll-line-input::-webkit-inner-spin-button {
-  margin-right: 0.95rem;
-  opacity: 0.72;
-}
 
 @media (max-width: 720px) {
   .scroll-line-panel {
@@ -2260,13 +2271,9 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
   .scroll-line-input {
     width: 6.05rem;
-    padding-right: 2.45rem;
+    padding-right: 2.15rem;
   }
 
-  .scroll-line-input::-webkit-outer-spin-button,
-  .scroll-line-input::-webkit-inner-spin-button {
-    margin-right: 0.9rem;
-  }
 }
 
 
