@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0-alpha.7
+
+- Allineata la larghezza del pannello sorgente mobile/tablet a quella del reader Markdown.
+- Compattati i campi range righe con larghezza effettiva per 5 cifre, evitando il taglio dell’ultimo bottone formato copia su smartphone.
+- Rifinito il layout responsive della toolbar sorgente per mantenere il gruppo formati nella stessa riga anche su pannelli stretti.
+
 ## 3.1.0-alpha.6
 
 - Esteso il campo template copia a tutta la larghezza disponibile del pannello **Sorgente** anche su tablet landscape e desktop.

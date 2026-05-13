@@ -1374,8 +1374,9 @@ body.line-numbers .markdown-body [data-line-start]::before {
   min-width: 0;
 }
 
-.source-range-input {
+.source-range-control .source-range-input {
   width: 3.85rem;
+  flex: 0 0 3.85rem;
   min-width: 0;
   padding-inline: 0.35rem;
   text-align: center;
@@ -1572,13 +1573,35 @@ body.line-numbers .markdown-body [data-line-start]::before {
     gap: 0.26rem;
   }
 
-  .source-range-input {
+  .source-range-control .source-range-input {
     width: 3.55rem;
+    flex-basis: 3.55rem;
     padding-inline: 0.28rem;
   }
 
   .copy-template-buttons {
     gap: 0.28rem;
+  }
+}
+
+@container source-panel (max-width: 440px) {
+  .line-tools {
+    column-gap: 0.34rem;
+    padding-inline: 0.65rem;
+  }
+
+  .source-range-control {
+    gap: 0.24rem;
+  }
+
+  .source-range-control .source-range-input {
+    width: 3.6rem;
+    flex-basis: 3.6rem;
+    padding-inline: 0.28rem;
+  }
+
+  .copy-template-buttons {
+    gap: 0.25rem;
   }
 }
 
@@ -1848,10 +1871,13 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
   .source-panel {
     position: fixed;
-    inset: auto 0 0 0;
+    inset: auto auto 0 50%;
     z-index: 45;
+    width: min(var(--reader-width), calc(100vw - 2.5rem));
+    max-width: calc(100vw - 2.5rem);
     height: min(72vh, 620px);
     border-radius: 1.25rem 1.25rem 0 0;
+    transform: translateX(-50%);
   }
 
   .mobile-only {
@@ -1895,6 +1921,11 @@ body.line-numbers .markdown-body [data-line-start]::before {
   .markdown-shell {
     padding: 0.22rem;
     border-radius: 1rem;
+  }
+
+  .source-panel {
+    width: calc(100vw - 1.3rem);
+    max-width: calc(100vw - 1.3rem);
   }
 
   .markdown-body {
