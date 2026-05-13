@@ -3,13 +3,13 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.8';
+const APP_VERSION = '3.1.0-alpha.9';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
 const FILE_BINDING_PASSIVE_CHECK_PAUSE_MS = 30_000;
 const FILE_BINDING_CLOSE_PAUSE_MS = 2_000;
-const SETTINGS_SCHEMA_VERSION = 6;
+const SETTINGS_SCHEMA_VERSION = 7;
 const INSTALL_STATE_KEY = `md-viewer-install-state:${import.meta.env.BASE_URL}`;
 const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
 const FILE_BINDING_DB_VERSION = 1;
@@ -26,6 +26,8 @@ const COPY_TEMPLATE_MODE_VALUES = new Set(Object.values(COPY_TEMPLATE_MODES));
 const DEFAULT_COPY_CUSTOM_TEMPLATE = '';
 const LEGACY_DEFAULT_COPY_CUSTOM_TEMPLATE = '[\\indice]: \\riga';
 const COPY_TEMPLATE_MAX_LENGTH = 200;
+const SOURCE_PANEL_HEIGHT_STEPS = Object.freeze(['1/4', '1/3', '1/2', '2/3', '3/4']);
+const DEFAULT_SOURCE_PANEL_HEIGHT_STEP = '1/3';
 const COPY_TEMPLATE_PRESETS = Object.freeze({
   [COPY_TEMPLATE_MODES.PLAIN]: '\\riga',
   [COPY_TEMPLATE_MODES.NUMBERED]: '[\\indice]: \\riga'
@@ -46,7 +48,8 @@ const DEFAULT_SETTINGS = Object.freeze({
   sourcePanelOpen: false,
   settingsPanelOpen: false,
   searchCaseSensitive: false,
-  searchWholeWords: false
+  searchWholeWords: false,
+  sourcePanelHeightStep: DEFAULT_SOURCE_PANEL_HEIGHT_STEP
 });
 
 const FONT_FAMILIES = Object.freeze({
@@ -77,6 +80,8 @@ const elements = Object.freeze({
   showLineNumbersToggle: document.querySelector('#showLineNumbersToggle'),
   linePanelToggle: document.querySelector('#linePanelToggle'),
   sourcePanel: document.querySelector('#sourcePanel'),
+  sourceSizeHandle: document.querySelector('#sourceSizeHandle'),
+  sourceSizeLabel: document.querySelector('#sourceSizeLabel'),
   themeToggle: document.querySelector('#themeToggle'),
   settingsToggle: document.querySelector('#settingsToggle'),
   installButton: document.querySelector('#installButton'),
@@ -89,6 +94,7 @@ const elements = Object.freeze({
   copyCustomTemplatePanel: document.querySelector('#copyCustomTemplatePanel'),
   copyCustomTemplateInput: document.querySelector('#copyCustomTemplateInput'),
   copyCustomTemplateClearButton: document.querySelector('#copyCustomTemplateClearButton'),
+  markdownShell: document.querySelector('.markdown-shell'),
   markdownBody: document.querySelector('#markdownBody'),
   closeFileButton: document.querySelector('#closeFileButton'),
   dropZone: document.querySelector('#dropZone'),
@@ -210,6 +216,10 @@ function loadSettings() {
       migratedSettings.copyTemplateMode = DEFAULT_SETTINGS.copyTemplateMode;
     }
 
+    if (!SOURCE_PANEL_HEIGHT_STEPS.includes(migratedSettings.sourcePanelHeightStep)) {
+      migratedSettings.sourcePanelHeightStep = DEFAULT_SOURCE_PANEL_HEIGHT_STEP;
+    }
+
     delete migratedSettings.copyWithLineNumbers;
     migratedSettings.settingsSchemaVersion = SETTINGS_SCHEMA_VERSION;
 
@@ -221,6 +231,71 @@ function loadSettings() {
 
 function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+}
+
+function parseFraction(fraction) {
+  const [rawNumerator, rawDenominator] = String(fraction).split('/');
+  const numerator = Number(rawNumerator);
+  const denominator = Number(rawDenominator);
+
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) {
+    return 1 / 3;
+  }
+
+  return numerator / denominator;
+}
+
+function getSourcePanelHeightStep() {
+  return SOURCE_PANEL_HEIGHT_STEPS.includes(state.settings.sourcePanelHeightStep)
+    ? state.settings.sourcePanelHeightStep
+    : DEFAULT_SOURCE_PANEL_HEIGHT_STEP;
+}
+
+function updateSourcePanelHeightControls() {
+  const step = getSourcePanelHeightStep();
+  const label = `Altezza sorgente: ${step}. Tocca per cambiare.`;
+
+  if (elements.sourceSizeLabel) {
+    elements.sourceSizeLabel.textContent = step;
+  }
+
+  if (elements.sourceSizeHandle) {
+    elements.sourceSizeHandle.title = label;
+    elements.sourceSizeHandle.setAttribute('aria-label', label);
+  }
+}
+
+function updateSourcePanelMobileHeight() {
+  updateSourcePanelHeightControls();
+
+  if (!elements.sourcePanel || !elements.markdownShell) {
+    return;
+  }
+
+  const isOverlayLayout = window.matchMedia('(max-width: 1180px)').matches;
+  if (!isOverlayLayout) {
+    elements.sourcePanel.style.removeProperty('--source-panel-mobile-height');
+    return;
+  }
+
+  const markdownRect = elements.markdownShell.getBoundingClientRect();
+  const referenceHeight = Math.max(markdownRect.height, 1);
+  const ratio = parseFraction(getSourcePanelHeightStep());
+  const nextHeight = Math.max(1, Math.round(referenceHeight * ratio));
+  elements.sourcePanel.style.setProperty('--source-panel-mobile-height', `${nextHeight}px`);
+}
+
+function cycleSourcePanelHeightStep() {
+  const currentStep = getSourcePanelHeightStep();
+  const currentIndex = SOURCE_PANEL_HEIGHT_STEPS.indexOf(currentStep);
+  const nextIndex = currentIndex >= 0
+    ? (currentIndex + 1) % SOURCE_PANEL_HEIGHT_STEPS.length
+    : SOURCE_PANEL_HEIGHT_STEPS.indexOf(DEFAULT_SOURCE_PANEL_HEIGHT_STEP);
+
+  state.settings.sourcePanelHeightStep = SOURCE_PANEL_HEIGHT_STEPS[nextIndex] || DEFAULT_SOURCE_PANEL_HEIGHT_STEP;
+  saveSettings();
+  updateSourcePanelMobileHeight();
+  requestAnimationFrame(updateSourceVirtualList);
 }
 
 function formatBytes(bytes) {
@@ -1169,6 +1244,7 @@ function applySettings() {
   elements.settingsbar.hidden = !state.settings.settingsPanelOpen;
   document.body.classList.toggle('settings-collapsed', !state.settings.settingsPanelOpen);
   syncControlStates();
+  updateSourcePanelMobileHeight();
   requestAnimationFrame(updateScrollJumpControls);
 }
 
@@ -2500,6 +2576,10 @@ function bindEvents() {
 
   elements.tocToggle.addEventListener('click', toggleTocPanel);
 
+  elements.sourceSizeHandle.addEventListener('click', () => {
+    cycleSourcePanelHeightStep();
+  });
+
   elements.showLineNumbersToggle.addEventListener('click', () => {
     state.settings.showLineNumbers = !state.settings.showLineNumbers;
     saveSettings();
@@ -2747,6 +2827,7 @@ function bindEvents() {
   });
 
   window.addEventListener('resize', () => {
+    requestAnimationFrame(updateSourcePanelMobileHeight);
     requestAnimationFrame(updateSourceVirtualList);
     requestAnimationFrame(updateScrollJumpControls);
   });
@@ -2772,6 +2853,7 @@ function boot() {
   bindInstallFlow();
   registerServiceWorker();
   scheduleFileBindingChecks();
+  updateSourcePanelMobileHeight();
   updateSourceVirtualList();
   updateScrollJumpControls();
 

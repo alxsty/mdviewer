@@ -735,7 +735,7 @@ input[type="number"] {
 
 .source-panel {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   container: source-panel / inline-size;
 }
 
@@ -1355,6 +1355,51 @@ body.line-numbers .markdown-body [data-line-start]::before {
   border-radius: 0.35rem;
 }
 
+.source-size-handle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+  height: 1.55rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-bottom: 1px solid var(--panel-border);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.source-size-handle:hover,
+.source-size-handle:focus-visible {
+  color: var(--text);
+  background: rgba(56, 189, 248, 0.08);
+  outline: none;
+}
+
+.source-size-handle-rule {
+  flex: 0 1 2.1rem;
+  max-width: 2.1rem;
+  height: 0.18rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.32;
+}
+
+.source-size-label {
+  min-width: 2.15rem;
+  text-align: center;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 .line-tools {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr);
@@ -1891,9 +1936,18 @@ body.line-numbers .markdown-body [data-line-start]::before {
     z-index: 45;
     width: min(var(--reader-width), calc(100vw - 2.5rem));
     max-width: calc(100vw - 2.5rem);
-    height: min(72vh, 620px);
+    height: var(--source-panel-mobile-height, min(72vh, 620px));
     border-radius: 1.25rem 1.25rem 0 0;
     transform: translateX(-50%);
+    transition: height 170ms ease;
+  }
+
+  .source-size-handle {
+    display: flex;
+  }
+
+  .source-panel .small-note {
+    display: none;
   }
 
   .mobile-only {

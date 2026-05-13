@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0-alpha.9
+
+- Migliorato il layout mobile del pannello sorgente: il testo guida viene nascosto in modalità overlay.
+- Aggiunta una handle superiore con label dello step corrente per cambiare l'altezza del pannello sorgente a step discreti: `1/4`, `1/3`, `1/2`, `2/3`, `3/4`.
+- L'altezza mobile del pannello sorgente viene salvata e ripristinata alle aperture successive.
+
 ## 3.1.0-alpha.8
 
 - Corretto il loop della richiesta autorizzazioni File System Access API su smartphone: i controlli passivi da focus/visibility non riaprono più il toast di autorizzazione e vengono messi in pausa dopo una richiesta permessi o dopo la chiusura del file.
