@@ -1357,9 +1357,9 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
 .line-tools {
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
-  justify-content: start;
+  justify-content: stretch;
   column-gap: 0.45rem;
   row-gap: 0.55rem;
   padding: 0.75rem;
@@ -1457,6 +1457,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
 .copy-template-panel {
   grid-column: 1 / -1;
   grid-row: 2;
+  justify-self: stretch;
   width: 100%;
   min-width: 0;
   max-height: 3rem;
@@ -1473,11 +1474,14 @@ body.line-numbers .markdown-body [data-line-start]::before {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
   min-width: 0;
 }
 
 .copy-template-input {
+  flex: 1 1 auto;
   width: 100%;
+  min-width: 0;
   height: 2.1rem;
   padding: 0 2.55rem 0 0.75rem;
   border: 1px solid var(--panel-border);

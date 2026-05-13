@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.5';
+const APP_VERSION = '3.1.0-alpha.6';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const SETTINGS_SCHEMA_VERSION = 6;
@@ -12,6 +12,8 @@ const FILE_BINDING_DB_NAME = 'md-viewer-file-binding';
 const FILE_BINDING_DB_VERSION = 1;
 const FILE_BINDING_STORE_NAME = 'file-bindings';
 const LAST_FILE_BINDING_KEY = 'last-file';
+const FILE_BINDING_RECHECK_AFTER_UPDATE_KEY = `md-viewer-file-binding-recheck-after-update:${import.meta.env.BASE_URL}`;
+const FILE_BINDING_PERMISSION_TOAST_TAG = 'file-binding-permission';
 const COPY_TEMPLATE_MODES = Object.freeze({
   PLAIN: 'plain',
   NUMBERED: 'numbered',
@@ -153,6 +155,9 @@ const state = {
   updateFallbackReloadTimer: null,
   serviceWorkerUpdateCheckInProgress: false,
   lastServiceWorkerUpdateCheckAt: 0,
+  serviceWorkerUpdateAvailable: false,
+  serviceWorkerUpdatePromptVisible: false,
+  fileBindingPermissionDeferredForUpdate: false,
   copyCustomTemplateEditing: false,
   copyCustomTemplateBeforeEdit: DEFAULT_COPY_CUSTOM_TEMPLATE
 };
@@ -249,11 +254,36 @@ function setStatus(message) {
     : text;
 }
 
+function dismissToastsByTag(tag) {
+  if (!tag) {
+    return;
+  }
+
+  for (const toast of document.querySelectorAll('[data-toast-tag]')) {
+    if (toast.dataset.toastTag !== tag) {
+      continue;
+    }
+
+    toast.classList.add('is-leaving');
+    window.setTimeout(() => toast.remove(), 180);
+  }
+}
+
+function isServiceWorkerUpdatePending() {
+  return Boolean(
+    state.updateAccepted
+    || state.updateReloadPending
+    || state.serviceWorkerUpdateAvailable
+    || state.serviceWorkerUpdatePromptVisible
+    || document.querySelector('[data-update-banner="true"]')
+  );
+}
+
 function showToast(message, options = {}) {
-  const { kind = 'info', timeoutMs = 5200, actionLabel = '', onAction = null } = options;
+  const { kind = 'info', timeoutMs = 5200, actionLabel = '', onAction = null, tag = '' } = options;
   const text = String(message || '').trim();
   if (!text) {
-    return;
+    return null;
   }
 
   let toastHost = document.querySelector('[data-toast-host="true"]');
@@ -266,9 +296,16 @@ function showToast(message, options = {}) {
     document.body.append(toastHost);
   }
 
+  if (tag) {
+    dismissToastsByTag(tag);
+  }
+
   const toast = document.createElement('div');
   toast.className = `app-toast app-toast--${kind}`;
   toast.setAttribute('role', 'status');
+  if (tag) {
+    toast.dataset.toastTag = tag;
+  }
 
   if (actionLabel && typeof onAction === 'function') {
     toast.classList.add('app-toast--actionable');
@@ -299,6 +336,8 @@ function showToast(message, options = {}) {
     toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     window.setTimeout(() => toast.remove(), 400);
   }, timeoutMs);
+
+  return toast;
 }
 
 function updateFileStatus() {
@@ -1671,12 +1710,20 @@ async function restoreLastLinkedFile(options = {}) {
       return true;
     } catch (error) {
       if (isFileBindingPermissionError(error)) {
+        if (isServiceWorkerUpdatePending()) {
+          state.fileBindingPermissionDeferredForUpdate = true;
+          dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
+          setStatus('Aggiornamento app disponibile: autorizzazione file rinviata dopo l’aggiornamento.');
+          return false;
+        }
+
         const message = 'Il file collegato richiede una nuova autorizzazione. Il collegamento è stato mantenuto.';
         setStatus(message);
         showToast(message, {
           kind: 'info',
           timeoutMs: 12000,
           actionLabel: 'Autorizza',
+          tag: FILE_BINDING_PERMISSION_TOAST_TAG,
           onAction: () => {
             void restoreLastLinkedFile({ requestPermission: true, force: true, reason: 'manual' });
           }
@@ -2056,6 +2103,11 @@ function requestServiceWorkerVersion(worker) {
 }
 
 function createUpdateBanner(registration) {
+  state.serviceWorkerUpdateAvailable = true;
+  state.serviceWorkerUpdatePromptVisible = true;
+  state.fileBindingPermissionDeferredForUpdate = true;
+  dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
+
   const existingBanner = document.querySelector('[data-update-banner="true"]');
   if (existingBanner) {
     return;
@@ -2074,6 +2126,14 @@ function createUpdateBanner(registration) {
   const button = banner.querySelector('button');
   button.addEventListener('click', () => {
     state.updateAccepted = true;
+    state.fileBindingPermissionDeferredForUpdate = true;
+    try {
+      sessionStorage.setItem(FILE_BINDING_RECHECK_AFTER_UPDATE_KEY, '1');
+    } catch (_error) {
+      // Session storage can be unavailable in restricted contexts; the normal
+      // startup check after reload still covers the common path.
+    }
+    dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
     button.disabled = true;
     button.textContent = 'Aggiornamento…';
     if (message) {
@@ -2624,6 +2684,18 @@ function bindEvents() {
   });
 }
 
+function shouldForceFileBindingCheckAfterUpdate() {
+  try {
+    const shouldRecheck = sessionStorage.getItem(FILE_BINDING_RECHECK_AFTER_UPDATE_KEY) === '1';
+    if (shouldRecheck) {
+      sessionStorage.removeItem(FILE_BINDING_RECHECK_AFTER_UPDATE_KEY);
+    }
+    return shouldRecheck;
+  } catch (_error) {
+    return false;
+  }
+}
+
 function boot() {
   applySettings();
   setSearchPanelOpen(false);
@@ -2634,7 +2706,12 @@ function boot() {
   scheduleFileBindingChecks();
   updateSourceVirtualList();
   updateScrollJumpControls();
-  void restoreLastLinkedFile();
+
+  const forceFileBindingCheck = shouldForceFileBindingCheckAfterUpdate();
+  void restoreLastLinkedFile({
+    force: forceFileBindingCheck,
+    reason: forceFileBindingCheck ? 'post-update' : 'startup'
+  });
 }
 
 boot();

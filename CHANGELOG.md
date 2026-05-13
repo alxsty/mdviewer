@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0-alpha.6
+
+- Esteso il campo template copia a tutta la larghezza disponibile del pannello **Sorgente** anche su tablet landscape e desktop.
+- Data priorità al banner di aggiornamento PWA rispetto al toast di autorizzazione File System Access API: se è disponibile un update, la richiesta autorizzazioni viene rinviata.
+- Dopo l'accettazione dell'aggiornamento, il successivo avvio forza un nuovo controllo del file collegato.
+
 ## 3.1.0-alpha.5
 
 - Corretto il focus dell'editor del template custom su tablet/touch: la matita ora rende il campo realmente editabile e apre la tastiera virtuale.

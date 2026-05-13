@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.1.0-alpha.5**
+Versione corrente: **3.1.0-alpha.6**
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
@@ -186,6 +186,8 @@ Nei browser senza File System Access API rimane disponibile il picker classico `
 Quando viene pubblicata una nuova build, il service worker la rileva e mostra un banner **Nuova versione disponibile**.
 
 Premendo **Aggiorna**, la PWA attiva il nuovo service worker e ricarica la pagina una sola volta.
+
+Se nello stesso momento il file collegato richiede una nuova autorizzazione, il banner di aggiornamento ha priorità: il toast di autorizzazione viene rinviato e il controllo del file viene ripetuto dopo il reload della nuova versione.
 
 ### Icone UI
 
