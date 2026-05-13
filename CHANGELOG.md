@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.1.0
+
+- Release stabile della 3.1.0.
+- Aggiunti template di copia nel pannello **Sorgente**: preset **Solo riga**, **[indice]: riga** e template **Custom** con placeholder `\riga`, `\indice` e `\n`.
+- Rifinita la UX dei controlli sorgente: bottoni formato copia compatti, campo template contestuale, modifica custom tramite matita, pulizia campo coerente e campi numerici senza spin button.
+- Migliorato il pannello **Sorgente** su smartphone/tablet: larghezza allineata al reader Markdown, testo guida nascosto in overlay mobile e altezza regolabile a step `1/4`, `1/3`, `1/2`, `2/3`, `3/4`.
+- Corretto il loop della richiesta autorizzazioni File System Access API su smartphone e data priorità al banner di aggiornamento PWA rispetto ai toast autorizzativi.
+- Stabilizzato il layout PWA Android dopo splash screen, ritorno in primo piano, rotazione e resize del `visualViewport`, evitando clipping di toolbar, box e pannello sorgente.
+
 ## 3.1.0-alpha.10
 
 - Corretto il ricalcolo della larghezza/altezza viewport nelle PWA Android dopo splash screen, ritorno in primo piano, rotazione e resize del `visualViewport`.

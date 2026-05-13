@@ -2,7 +2,7 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.1.0-alpha.10**
+Versione corrente: **3.1.0**
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
@@ -169,7 +169,7 @@ Poi usa il prompt del browser oppure il menu Chrome:
 6. Apri la ricerca con il bottone lente.
 7. Usa i bottoni floating per andare all’inizio/fine documento.
 
-## File collegato — V3 alpha
+## File collegato — V3
 
 Dove il browser supporta la File System Access API, il bottone **Apri file** usa il file picker avanzato e salva in IndexedDB un riferimento al file originale.
 
