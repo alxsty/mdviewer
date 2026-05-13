@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0-alpha.9';
+const APP_VERSION = '3.1.0-alpha.10';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
@@ -172,10 +172,96 @@ const state = {
   lastFileBindingPermissionGrantAt: 0,
   fileBindingChecksPausedUntil: 0,
   copyCustomTemplateEditing: false,
-  copyCustomTemplateBeforeEdit: DEFAULT_COPY_CUSTOM_TEMPLATE
+  copyCustomTemplateBeforeEdit: DEFAULT_COPY_CUSTOM_TEMPLATE,
+  viewportLayoutFrame: 0,
+  viewportLayoutSettleTimers: []
 };
 
 const INITIAL_MARKDOWN_BODY_HTML = elements.markdownBody.innerHTML;
+
+
+function getFinitePositiveNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function getStableViewportWidth() {
+  const root = document.documentElement;
+  const candidates = [
+    getFinitePositiveNumber(root.clientWidth),
+    getFinitePositiveNumber(window.innerWidth),
+    getFinitePositiveNumber(window.visualViewport?.width)
+  ].filter(Boolean);
+
+  return Math.max(1, Math.round(Math.min(...candidates, 4096)));
+}
+
+function getStableViewportHeight() {
+  const root = document.documentElement;
+  const candidates = [
+    getFinitePositiveNumber(window.visualViewport?.height),
+    getFinitePositiveNumber(window.innerHeight),
+    getFinitePositiveNumber(root.clientHeight)
+  ].filter(Boolean);
+
+  return Math.max(1, Math.round(Math.min(...candidates, 4096)));
+}
+
+function updateAppViewportMetrics() {
+  const root = document.documentElement;
+  root.style.setProperty('--app-viewport-width', `${getStableViewportWidth()}px`);
+  root.style.setProperty('--app-viewport-height', `${getStableViewportHeight()}px`);
+}
+
+function refreshViewportDependentLayout() {
+  updateAppViewportMetrics();
+  scheduleViewportDependentLayoutRefresh({ settle: true });
+}
+
+function scheduleViewportDependentLayoutRefresh({ settle = false } = {}) {
+  if (state.viewportLayoutFrame) {
+    window.cancelAnimationFrame(state.viewportLayoutFrame);
+  }
+
+  state.viewportLayoutFrame = window.requestAnimationFrame(() => {
+    state.viewportLayoutFrame = 0;
+    refreshViewportDependentLayout();
+  });
+
+  if (!settle) {
+    return;
+  }
+
+  for (const timer of state.viewportLayoutSettleTimers) {
+    window.clearTimeout(timer);
+  }
+
+  state.viewportLayoutSettleTimers = [80, 240, 520].map((delay) => window.setTimeout(() => {
+    refreshViewportDependentLayout();
+  }, delay));
+}
+
+function bindViewportLayoutRefresh() {
+  updateAppViewportMetrics();
+
+  const refreshSettled = () => scheduleViewportDependentLayoutRefresh({ settle: true });
+  const refreshNextFrame = () => scheduleViewportDependentLayoutRefresh();
+
+  window.addEventListener('resize', refreshSettled);
+  window.addEventListener('orientationchange', refreshSettled);
+  window.addEventListener('pageshow', refreshSettled);
+  window.addEventListener('focus', refreshSettled);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      refreshSettled();
+    }
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', refreshSettled);
+    window.visualViewport.addEventListener('scroll', refreshNextFrame);
+  }
+}
 
 function loadSettings() {
   try {
@@ -266,6 +352,7 @@ function updateSourcePanelHeightControls() {
 }
 
 function updateSourcePanelMobileHeight() {
+  updateAppViewportMetrics();
   updateSourcePanelHeightControls();
 
   if (!elements.sourcePanel || !elements.markdownShell) {
@@ -2826,12 +2913,8 @@ function bindEvents() {
     openMarkdownFile(file, { clearBinding: true });
   });
 
-  window.addEventListener('resize', () => {
-    requestAnimationFrame(updateSourcePanelMobileHeight);
-    requestAnimationFrame(updateSourceVirtualList);
-    requestAnimationFrame(updateScrollJumpControls);
-  });
 }
+
 
 function shouldForceFileBindingCheckAfterUpdate() {
   try {
@@ -2846,6 +2929,7 @@ function shouldForceFileBindingCheckAfterUpdate() {
 }
 
 function boot() {
+  bindViewportLayoutRefresh();
   applySettings();
   setSearchPanelOpen(false);
   bindEvents();

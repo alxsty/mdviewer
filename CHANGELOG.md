@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0-alpha.10
+
+- Corretto il ricalcolo della larghezza/altezza viewport nelle PWA Android dopo splash screen, ritorno in primo piano, rotazione e resize del `visualViewport`.
+- Reso il layout root più robusto contro width iniziali errate: `html`, `body`, `#app`, topbar, workspace e box principali ora restano vincolati alla viewport stabile.
+- Il pannello **Sorgente** mobile usa la viewport normalizzata anche per la larghezza, evitando clipping dei box e dei bottoni dopo il resume dell'app.
+
 ## 3.1.0-alpha.9
 
 - Migliorato il layout mobile del pannello sorgente: il testo guida viene nascosto in modalità overlay.

@@ -33,7 +33,10 @@
   --scrollbar-track: rgba(148, 163, 184, 0.08);
   --scrollbar-thumb: rgba(148, 163, 184, 0.35);
   --scrollbar-thumb-hover: rgba(56, 189, 248, 0.65);
+  --app-viewport-width: 100vw;
+  --app-viewport-height: 100dvh;
 }
+
 
 [data-theme="light"] {
   color-scheme: light;
@@ -112,15 +115,22 @@
 
 html,
 body {
+  width: 100%;
+  max-width: 100%;
   height: 100%;
+  min-width: 0;
   min-height: 100%;
   overflow: hidden;
+  overflow-x: hidden;
   touch-action: pan-x pan-y;
   overscroll-behavior: none;
 }
 
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background:
     radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 32rem),
     radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.12), transparent 26rem),
@@ -204,9 +214,14 @@ button {
 }
 
 .app-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  inline-size: min(100%, var(--app-viewport-width));
   height: 100vh;
-  height: 100dvh;
+  height: var(--app-viewport-height, 100dvh);
   min-height: 0;
+  overflow: hidden;
   display: grid;
   grid-template-areas:
     "topbar"
@@ -223,6 +238,10 @@ body.settings-collapsed {
 .topbar,
 .settingsbar,
 .statusbar {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
   backdrop-filter: blur(16px);
   background: var(--panel);
   border-color: var(--panel-border);
@@ -277,9 +296,15 @@ body.settings-collapsed {
 }
 
 .topbar-actions {
+  max-width: 100%;
   min-width: 0;
   flex-shrink: 0;
 }
+
+.brand {
+  max-width: 100%;
+}
+
 
 .toolbar-separator {
   width: 1px;
@@ -600,7 +625,7 @@ input[type="number"] {
 }
 
 .search-control.open .search-panel {
-  max-width: min(39rem, calc(100vw - 2rem));
+  max-width: min(39rem, calc(var(--app-viewport-width, 100vw) - 2rem));
   width: min(39rem, 58vw);
   padding: 0.28rem;
   border-color: var(--panel-border);
@@ -703,6 +728,9 @@ input[type="number"] {
 
 .workspace {
   grid-area: workspace;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) minmax(320px, 28vw);
@@ -873,6 +901,8 @@ input[type="number"] {
 
 .reader-area {
   position: relative;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
 }
@@ -899,6 +929,7 @@ input[type="number"] {
 
 .markdown-shell {
   position: relative;
+  width: 100%;
   max-width: var(--reader-width);
   height: 100%;
   margin: 0 auto;
@@ -1743,7 +1774,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
   z-index: 10000;
   display: grid;
   gap: 0.6rem;
-  width: min(34rem, calc(100vw - 2rem));
+  width: min(34rem, calc(var(--app-viewport-width, 100vw) - 2rem));
   pointer-events: none;
   transform: translateX(-50%);
 }
@@ -1804,7 +1835,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  max-width: calc(100vw - 2rem);
+  max-width: calc(var(--app-viewport-width, 100vw) - 2rem);
   padding: 0.7rem 0.85rem 0.7rem 1rem;
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 999px;
@@ -1934,8 +1965,8 @@ body.line-numbers .markdown-body [data-line-start]::before {
     position: fixed;
     inset: auto auto 0 50%;
     z-index: 45;
-    width: min(var(--reader-width), calc(100vw - 2.5rem));
-    max-width: calc(100vw - 2.5rem);
+    width: min(var(--reader-width), calc(var(--app-viewport-width, 100vw) - 2.5rem));
+    max-width: calc(var(--app-viewport-width, 100vw) - 2.5rem);
     height: var(--source-panel-mobile-height, min(72vh, 620px));
     border-radius: 1.25rem 1.25rem 0 0;
     transform: translateX(-50%);
@@ -1994,8 +2025,8 @@ body.line-numbers .markdown-body [data-line-start]::before {
   }
 
   .source-panel {
-    width: calc(100vw - 1.3rem);
-    max-width: calc(100vw - 1.3rem);
+    width: calc(var(--app-viewport-width, 100vw) - 1.3rem);
+    max-width: calc(var(--app-viewport-width, 100vw) - 1.3rem);
   }
 
   .markdown-body {
