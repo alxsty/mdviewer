@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.3
+
+- Corretto il toggle dei numeri di riga nel Markdown renderizzato: la prima riga/blocco visibile resta ancorata prima e dopo l’attivazione/disattivazione dei chip numerici.
+- Il mantenimento della posizione ora funziona sia dopo **Vai alla riga** sia dopo uno scroll manuale, senza dipendere dall’ultimo target del goto.
+
 ## 3.1.2
 
 - Corretto **Vai alla riga**: la riga target viene agganciata come prima visibile nel pannello sorgente e nel Markdown renderizzato invece di finire centrata o in una posizione variabile.

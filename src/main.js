@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.2';
+const APP_VERSION = '3.1.3';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
@@ -1037,6 +1037,82 @@ function alignMarkdownSourceLineToTop(lineNumber, targetBlock = null, options = 
   elements.markdownBody.scrollTo({ top, behavior });
   requestAnimationFrame(updateScrollJumpControls);
   return true;
+}
+
+function getMarkdownTopVisualAnchor() {
+  if (!elements.markdownBody || !hasScrollableMarkdownDocument()) {
+    return null;
+  }
+
+  const container = elements.markdownBody;
+  const containerRect = container.getBoundingClientRect();
+  const viewportTop = containerRect.top;
+  const viewportBottom = containerRect.bottom;
+  const visibleBlocks = [...container.querySelectorAll('[data-line-start][data-line-end]')]
+    .map((element) => {
+      const rect = element.getBoundingClientRect();
+      const start = Number(element.getAttribute('data-line-start'));
+      const end = Number(element.getAttribute('data-line-end')) || start;
+      return { element, rect, start, end };
+    })
+    .filter((item) => (
+      Number.isFinite(item.start)
+      && Number.isFinite(item.end)
+      && item.rect.bottom > viewportTop + 1
+      && item.rect.top < viewportBottom - 1
+    ))
+    .sort((a, b) => (a.rect.top - b.rect.top) || (a.start - b.start));
+
+  const anchor = visibleBlocks[0];
+  if (!anchor) {
+    return {
+      element: null,
+      offsetRatio: 0,
+      fallbackScrollTop: container.scrollTop
+    };
+  }
+
+  const offsetPx = Math.max(0, viewportTop - anchor.rect.top);
+  const height = Math.max(anchor.rect.height, 1);
+
+  return {
+    element: anchor.element,
+    offsetRatio: Math.min(Math.max(offsetPx / height, 0), 0.98),
+    fallbackScrollTop: container.scrollTop
+  };
+}
+
+function restoreMarkdownTopVisualAnchor(anchor) {
+  if (!anchor || !elements.markdownBody) {
+    return false;
+  }
+
+  const container = elements.markdownBody;
+  let nextScrollTop = anchor.fallbackScrollTop || 0;
+
+  if (anchor.element && container.contains(anchor.element)) {
+    const blockTop = getElementTopWithinScrollContainer(anchor.element, container);
+    const blockHeight = Math.max(anchor.element.getBoundingClientRect().height, 1);
+    nextScrollTop = blockTop + (blockHeight * (anchor.offsetRatio || 0));
+  }
+
+  const maxTop = Math.max(container.scrollHeight - container.clientHeight, 0);
+  container.scrollTop = Math.min(Math.max(nextScrollTop, 0), maxTop);
+  requestAnimationFrame(updateScrollJumpControls);
+  return true;
+}
+
+function scheduleMarkdownTopVisualAnchorRestore(anchor) {
+  if (!anchor) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    restoreMarkdownTopVisualAnchor(anchor);
+    requestAnimationFrame(() => {
+      restoreMarkdownTopVisualAnchor(anchor);
+    });
+  });
 }
 
 function scheduleScrollLineTopAlignment(lineNumber, options = {}) {
@@ -2759,16 +2835,12 @@ function bindEvents() {
   });
 
   elements.showLineNumbersToggle.addEventListener('click', () => {
-    const shouldPreserveGotoTarget = isLastScrollLineTargetAnchored();
-    const lineToPreserve = shouldPreserveGotoTarget ? state.lastScrollLineTarget : null;
+    const markdownAnchor = getMarkdownTopVisualAnchor();
 
     state.settings.showLineNumbers = !state.settings.showLineNumbers;
     saveSettings();
     applySettings();
-
-    if (lineToPreserve) {
-      scheduleScrollLineTopAlignment(lineToPreserve);
-    }
+    scheduleMarkdownTopVisualAnchorRestore(markdownAnchor);
   });
 
   elements.linePanelToggle.addEventListener('click', () => {
