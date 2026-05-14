@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '3.1.1';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
@@ -114,6 +114,7 @@ const elements = Object.freeze({
   scrollLineButton: document.querySelector('#scrollLineButton'),
   scrollLineInput: document.querySelector('#scrollLineInput'),
   scrollLineClearButton: document.querySelector('#scrollLineClearButton'),
+  scrollLineSubmitButton: document.querySelector('#scrollLineSubmitButton'),
   scrollBottomButton: document.querySelector('#scrollBottomButton'),
   appVersion: document.querySelector('#appVersion'),
   searchControl: document.querySelector('#searchControl'),
@@ -2865,6 +2866,7 @@ function bindEvents() {
   elements.scrollTopButton.addEventListener('click', () => scrollMarkdownToEdge('top'));
   elements.scrollLineButton.addEventListener('click', toggleScrollLinePanel);
   elements.scrollLineClearButton.addEventListener('click', clearScrollLineInput);
+  elements.scrollLineSubmitButton.addEventListener('click', submitScrollLineInput);
   elements.scrollLineInput.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.preventDefault();

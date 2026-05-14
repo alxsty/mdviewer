@@ -15,7 +15,7 @@
         <div class="brand" aria-label="Applicazione Markdown Viewer">
           <span class="brand-mark">MD</span>
           <span class="brand-title">Markdown Viewer</span>
-          <span id="appVersion" class="brand-version">v3.1.0</span>
+          <span id="appVersion" class="brand-version">v3.1.1</span>
         </div>
 
         <div class="topbar-actions">
@@ -120,11 +120,14 @@
               <div id="scrollLineGroup" class="scroll-line-group">
                 <div id="scrollLinePanel" class="scroll-line-panel" hidden>
                   <div class="scroll-line-field">
-                    <input id="scrollLineInput" class="scroll-line-input" type="text" min="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Numero riga da raggiungere" placeholder="riga" />
+                    <input id="scrollLineInput" class="scroll-line-input" type="text" min="1" value="" inputmode="numeric" enterkeyhint="go" pattern="[0-9]*" aria-label="Numero riga da raggiungere" placeholder="riga" />
                     <button id="scrollLineClearButton" class="scroll-line-clear" type="button" title="Pulisci riga" aria-label="Pulisci riga" hidden>
               <span class="material-icon" aria-hidden="true">close</span>
             </button>
                   </div>
+                  <button id="scrollLineSubmitButton" class="scroll-line-submit" type="button" title="Conferma riga" aria-label="Conferma riga">
+              <span class="material-icon" aria-hidden="true">arrow_forward</span>
+            </button>
                 </div>
                 <button id="scrollLineButton" class="icon-button scroll-jump-button" type="button" title="Vai alla riga" aria-label="Vai alla riga" aria-expanded="false">
               <span class="material-icon" aria-hidden="true">gps_fixed</span>

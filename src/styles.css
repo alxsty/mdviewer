@@ -93,7 +93,8 @@
 .mini-icon-button .material-icon,
 .copy-template-edit-button .material-icon,
 .copy-template-clear .material-icon,
-.scroll-line-clear .material-icon {
+.scroll-line-clear .material-icon,
+.scroll-line-submit .material-icon {
   pointer-events: none;
 }
 
@@ -800,7 +801,8 @@ input[type="number"] {
 .mini-icon-button .material-icon,
 .copy-template-edit-button .material-icon,
 .copy-template-clear .material-icon,
-.scroll-line-clear .material-icon {
+.scroll-line-clear .material-icon,
+.scroll-line-submit .material-icon {
   pointer-events: none;
 }
 
@@ -1007,7 +1009,8 @@ input[type="number"] {
 .mini-icon-button .material-icon,
 .copy-template-edit-button .material-icon,
 .copy-template-clear .material-icon,
-.scroll-line-clear .material-icon {
+.scroll-line-clear .material-icon,
+.scroll-line-submit .material-icon {
   pointer-events: none;
 }
 
@@ -2146,7 +2149,8 @@ body.line-numbers .markdown-body [data-line-start]::before {
 .mini-icon-button .material-icon,
 .copy-template-edit-button .material-icon,
 .copy-template-clear .material-icon,
-.scroll-line-clear .material-icon {
+.scroll-line-clear .material-icon,
+.scroll-line-submit .material-icon {
   pointer-events: none;
 }
 
@@ -2266,6 +2270,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
   right: calc(100% + 0.55rem);
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   width: max-content;
   padding: 0.35rem;
   border: 1px solid rgba(148, 163, 184, 0.24);
@@ -2336,6 +2341,38 @@ body.line-numbers .markdown-body [data-line-start]::before {
   opacity: 1;
 }
 
+.scroll-line-submit {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.95rem;
+  height: 1.95rem;
+  border: 1px solid rgba(56, 189, 248, 0.44);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  color: #ffffff;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.12), 0 6px 16px rgba(14, 165, 233, 0.18);
+}
+
+.scroll-line-submit:hover {
+  border-color: rgba(125, 211, 252, 0.72);
+  transform: translateY(-1px);
+}
+
+.scroll-line-submit:focus,
+.scroll-line-submit:focus-visible {
+  outline: none;
+  border-color: rgba(125, 211, 252, 0.95);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18), inset 0 0 10px rgba(255, 255, 255, 0.12);
+}
+
+.scroll-line-submit .material-icon {
+  font-size: 1.12rem;
+}
+
 .scroll-line-group.is-open .scroll-jump-button:not(:disabled) {
   border-color: rgba(56, 189, 248, 0.56);
   background: linear-gradient(135deg, var(--accent-strong), var(--accent));
@@ -2355,8 +2392,13 @@ body.line-numbers .markdown-body [data-line-start]::before {
   }
 
   .scroll-line-input {
-    width: 6.05rem;
-    padding-right: 2.15rem;
+    width: 5.65rem;
+    padding-right: 2.05rem;
+  }
+
+  .scroll-line-submit {
+    width: 1.85rem;
+    height: 1.85rem;
   }
 
 }

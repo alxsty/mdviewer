@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.1
+
+- Corretto il comando **Vai alla riga** su smartphone/tablet: il pannello ora mostra un pulsante esplicito di conferma con icona `arrow_forward`, così l’operazione resta utilizzabile anche quando la tastiera numerica non espone il tasto Invio/Go.
+- Aggiunto `enterkeyhint="go"` al campo riga per suggerire al browser mobile l’azione corretta quando disponibile.
+
 ## 3.1.0
 
 - Release stabile della 3.1.0.

@@ -2,7 +2,9 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.1.0**
+Versione corrente: **3.1.1**
+
+Patch 3.1.1: il comando **Vai alla riga** include una conferma esplicita per tastiere numeriche touch che non mostrano Invio/Go.
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>
