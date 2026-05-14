@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.1';
+const APP_VERSION = '3.1.2';
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
@@ -174,6 +174,7 @@ const state = {
   fileBindingChecksPausedUntil: 0,
   copyCustomTemplateEditing: false,
   copyCustomTemplateBeforeEdit: DEFAULT_COPY_CUSTOM_TEMPLATE,
+  lastScrollLineTarget: null,
   viewportLayoutFrame: 0,
   viewportLayoutSettleTimers: []
 };
@@ -885,6 +886,8 @@ function scrollMarkdownToEdge(edge) {
     return;
   }
 
+  state.lastScrollLineTarget = null;
+
   const top = edge === 'bottom'
     ? Math.max(elements.markdownBody.scrollHeight - elements.markdownBody.clientHeight, 0)
     : 0;
@@ -992,19 +995,102 @@ function findRenderedBlockForLine(lineNumber) {
   return candidates.sort((a, b) => b.end - a.end)[0].element;
 }
 
-function scrollMarkdownToSourceLine(lineNumber) {
+function getElementTopWithinScrollContainer(element, container) {
+  const elementRect = element.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+
+  return elementRect.top - containerRect.top + container.scrollTop;
+}
+
+function getMarkdownScrollTopForSourceLine(lineNumber, targetBlock = null) {
+  const block = targetBlock || findRenderedBlockForLine(lineNumber);
+
+  if (!block) {
+    return null;
+  }
+
+  const blockStart = Number(block.getAttribute('data-line-start'));
+  const blockEnd = Number(block.getAttribute('data-line-end')) || blockStart;
+  const normalizedLine = clampLine(lineNumber);
+  const blockTop = getElementTopWithinScrollContainer(block, elements.markdownBody);
+  const blockHeight = Math.max(block.getBoundingClientRect().height, 0);
+  let targetTop = blockTop;
+
+  const canEstimateLineInsideBlock = block.matches('pre, code, .metadata-card');
+  if (canEstimateLineInsideBlock && Number.isFinite(blockStart) && Number.isFinite(blockEnd) && blockEnd > blockStart && normalizedLine > blockStart) {
+    const lineRatio = Math.min(Math.max((normalizedLine - blockStart) / (blockEnd - blockStart + 1), 0), 0.96);
+    targetTop += blockHeight * lineRatio;
+  }
+
+  const maxTop = Math.max(elements.markdownBody.scrollHeight - elements.markdownBody.clientHeight, 0);
+  return Math.min(Math.max(targetTop, 0), maxTop);
+}
+
+function alignMarkdownSourceLineToTop(lineNumber, targetBlock = null, options = {}) {
+  const { behavior = 'auto' } = options;
+  const top = getMarkdownScrollTopForSourceLine(lineNumber, targetBlock);
+
+  if (top === null) {
+    return false;
+  }
+
+  elements.markdownBody.scrollTo({ top, behavior });
+  requestAnimationFrame(updateScrollJumpControls);
+  return true;
+}
+
+function scheduleScrollLineTopAlignment(lineNumber, options = {}) {
+  const { behavior = 'auto' } = options;
+  const normalizedLine = clampLine(lineNumber);
+
+  requestAnimationFrame(() => {
+    alignMarkdownSourceLineToTop(normalizedLine, null, { behavior });
+    scrollSourceToLine(normalizedLine);
+    requestAnimationFrame(() => {
+      alignMarkdownSourceLineToTop(normalizedLine, null, { behavior: 'auto' });
+      scrollSourceToLine(normalizedLine);
+    });
+  });
+}
+
+function isLastScrollLineTargetAnchored() {
+  if (!state.lastScrollLineTarget || !hasScrollableMarkdownDocument()) {
+    return false;
+  }
+
+  const targetTop = getMarkdownScrollTopForSourceLine(state.lastScrollLineTarget);
+
+  if (targetTop === null) {
+    return false;
+  }
+
+  return Math.abs(elements.markdownBody.scrollTop - targetTop) <= 3;
+}
+
+function scrollMarkdownToSourceLine(lineNumber, options = {}) {
+  const { updateStatus = true, rememberTarget = true } = options;
   const normalizedLine = clampLine(lineNumber);
   const targetBlock = findRenderedBlockForLine(normalizedLine);
 
   if (!targetBlock) {
-    setStatus(`Riga ${normalizedLine} non trovata nel Markdown renderizzato.`);
+    if (updateStatus) {
+      setStatus(`Riga ${normalizedLine} non trovata nel Markdown renderizzato.`);
+    }
     return false;
   }
 
-  selectRenderedBlock(targetBlock, { updateRange: true });
-  targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-  window.setTimeout(updateScrollJumpControls, 220);
-  setStatus(`Raggiunta riga ${normalizedLine}.`);
+  selectRenderedBlock(targetBlock, { updateRange: false });
+  setSelectedLineRange(normalizedLine, normalizedLine, { scrollSource: true, updateBlock: false });
+  alignMarkdownSourceLineToTop(normalizedLine, targetBlock, { behavior: 'auto' });
+  scheduleScrollLineTopAlignment(normalizedLine);
+
+  if (rememberTarget) {
+    state.lastScrollLineTarget = normalizedLine;
+  }
+
+  if (updateStatus) {
+    setStatus(`Raggiunta riga ${normalizedLine}.`);
+  }
   return true;
 }
 
@@ -1494,6 +1580,7 @@ function resetDocumentToEmptyState() {
   state.selectedLineStart = 1;
   state.selectedLineEnd = 1;
   state.selectedBlockElement = null;
+  state.lastScrollLineTarget = null;
   state.frontmatter = null;
   state.currentFileLinked = false;
   clearTouchRangeMode();
@@ -2015,6 +2102,7 @@ function loadMarkdownText(text, fileName = '') {
   state.sourceLines = splitMarkdownLines(text);
   state.selectedLineStart = 1;
   state.selectedLineEnd = Math.min(1, state.sourceLines.length);
+  state.lastScrollLineTarget = null;
   resetSearchForNewDocument();
   elements.lineFromInput.max = String(state.sourceLines.length);
   elements.lineToInput.max = String(state.sourceLines.length);
@@ -2236,6 +2324,7 @@ function handleRenderedBlockClick(event) {
     clearTouchRangeMode();
   }
 
+  state.lastScrollLineTarget = null;
   selectRenderedBlock(block, { extendRange: event.shiftKey });
 }
 
@@ -2260,6 +2349,7 @@ function startRenderedBlockTouchRange(event) {
     state.touchRangeAnchorLine = range.start;
     state.touchRangeMode = true;
     state.suppressNextMarkdownClick = true;
+    state.lastScrollLineTarget = null;
     selectRenderedBlock(block);
     setStatus(`Ancora selezione impostata alla riga ${range.start}. Tocca un altro blocco per estendere l’intervallo.`);
   }, TOUCH_RANGE_LONG_PRESS_MS);
@@ -2669,9 +2759,16 @@ function bindEvents() {
   });
 
   elements.showLineNumbersToggle.addEventListener('click', () => {
+    const shouldPreserveGotoTarget = isLastScrollLineTargetAnchored();
+    const lineToPreserve = shouldPreserveGotoTarget ? state.lastScrollLineTarget : null;
+
     state.settings.showLineNumbers = !state.settings.showLineNumbers;
     saveSettings();
     applySettings();
+
+    if (lineToPreserve) {
+      scheduleScrollLineTopAlignment(lineToPreserve);
+    }
   });
 
   elements.linePanelToggle.addEventListener('click', () => {
@@ -2829,6 +2926,7 @@ function bindEvents() {
     }
 
     const lineNumber = Number(lineButton.dataset.line);
+    state.lastScrollLineTarget = null;
     if (event.shiftKey) {
       setSelectedLineRange(state.selectedLineStart, lineNumber, { scrollSource: false, updateBlock: true });
     } else {

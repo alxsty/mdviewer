@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.2
+
+- Corretto **Vai alla riga**: la riga target viene agganciata come prima visibile nel pannello sorgente e nel Markdown renderizzato invece di finire centrata o in una posizione variabile.
+- Stabilizzato il mantenimento dell’allineamento dopo l’attivazione/disattivazione dei numeri di riga, evitando che il target venga spinto fuori dalla porzione visibile.
+
 ## 3.1.1
 
 - Corretto il comando **Vai alla riga** su smartphone/tablet: il pannello ora mostra un pulsante esplicito di conferma con icona `arrow_forward`, così l’operazione resta utilizzabile anche quando la tastiera numerica non espone il tasto Invio/Go.
