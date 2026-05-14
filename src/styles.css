@@ -960,7 +960,7 @@ input[type="number"] {
 .close-file-button {
   position: absolute;
   top: 0.72rem;
-  right: calc(var(--scrollbar-size) + 0.82rem);
+  left: 0.72rem;
   z-index: 15;
   width: 2.15rem;
   height: 2.15rem;
@@ -1041,6 +1041,14 @@ input[type="number"] {
 
 body.line-numbers .markdown-body {
   padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width) + 0.35rem);
+}
+
+body.file-open .markdown-body {
+  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + 2.75rem);
+}
+
+body.file-open.line-numbers .markdown-body {
+  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width) + 3rem);
 }
 
 .markdown-body.empty-state {
@@ -1387,6 +1395,7 @@ body.line-numbers .markdown-body [data-line-start]::before {
   outline: 2px solid rgba(56, 189, 248, 0.65);
   outline-offset: 0.25rem;
   border-radius: 0.35rem;
+  scroll-margin-block: 0.65rem;
 }
 
 .source-size-handle {

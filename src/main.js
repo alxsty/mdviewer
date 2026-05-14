@@ -3,7 +3,8 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.3';
+const APP_VERSION = '3.1.4';
+const SELECTED_BLOCK_SCROLL_MARGIN_PX = 8;
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
 const FILE_BINDING_PERMISSION_TOAST_COOLDOWN_MS = 60_000;
@@ -548,6 +549,8 @@ function updateFileStatus() {
     return;
   }
 
+  document.body.classList.toggle('file-open', Boolean(state.currentFileName));
+
   if (elements.closeFileButton) {
     elements.closeFileButton.hidden = !state.currentFileName;
   }
@@ -1002,6 +1005,12 @@ function getElementTopWithinScrollContainer(element, container) {
   return elementRect.top - containerRect.top + container.scrollTop;
 }
 
+function getSelectedBlockScrollMargin(element) {
+  return element?.classList?.contains('selected-source-block')
+    ? SELECTED_BLOCK_SCROLL_MARGIN_PX
+    : 0;
+}
+
 function getMarkdownScrollTopForSourceLine(lineNumber, targetBlock = null) {
   const block = targetBlock || findRenderedBlockForLine(lineNumber);
 
@@ -1014,7 +1023,7 @@ function getMarkdownScrollTopForSourceLine(lineNumber, targetBlock = null) {
   const normalizedLine = clampLine(lineNumber);
   const blockTop = getElementTopWithinScrollContainer(block, elements.markdownBody);
   const blockHeight = Math.max(block.getBoundingClientRect().height, 0);
-  let targetTop = blockTop;
+  let targetTop = blockTop - getSelectedBlockScrollMargin(block);
 
   const canEstimateLineInsideBlock = block.matches('pre, code, .metadata-card');
   if (canEstimateLineInsideBlock && Number.isFinite(blockStart) && Number.isFinite(blockEnd) && blockEnd > blockStart && normalizedLine > blockStart) {
@@ -1093,7 +1102,9 @@ function restoreMarkdownTopVisualAnchor(anchor) {
   if (anchor.element && container.contains(anchor.element)) {
     const blockTop = getElementTopWithinScrollContainer(anchor.element, container);
     const blockHeight = Math.max(anchor.element.getBoundingClientRect().height, 1);
-    nextScrollTop = blockTop + (blockHeight * (anchor.offsetRatio || 0));
+    const anchorOffsetRatio = anchor.offsetRatio || 0;
+    const selectedMargin = anchorOffsetRatio <= 0.02 ? getSelectedBlockScrollMargin(anchor.element) : 0;
+    nextScrollTop = blockTop + (blockHeight * anchorOffsetRatio) - selectedMargin;
   }
 
   const maxTop = Math.max(container.scrollHeight - container.clientHeight, 0);

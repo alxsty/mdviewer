@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.4
+
+- Corretto il posizionamento del Markdown renderizzato quando una riga/blocco selezionato viene scrollato al bordo visibile: il box azzurro non viene più tagliato sopra.
+- Spostata la X di chiusura file a sinistra del reader Markdown, prima degli eventuali chip numerici, per non interferire con testo e controlli rapidi su mobile.
+
 ## 3.1.3
 
 - Corretto il toggle dei numeri di riga nel Markdown renderizzato: la prima riga/blocco visibile resta ancorata prima e dopo l’attivazione/disattivazione dei chip numerici.
