@@ -2,9 +2,9 @@
 
 PWA installabile per visualizzare file Markdown locali in sola lettura, con indice heading, metadati YAML, pannello sorgente, ricerca nel documento e controlli rapidi di navigazione.
 
-Versione corrente: **3.1.4**
+Versione corrente: **3.1.5**
 
-Patch 3.1.4: il Markdown renderizzato evita il clipping del box di selezione azzurro quando una riga/blocco selezionato viene portato al bordo visibile; la X di chiusura file è stata spostata a sinistra del reader.
+Patch 3.1.5: rifinito lo spacing tra la X di chiusura file e i chip dei numeri riga nel reader Markdown.
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>

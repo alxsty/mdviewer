@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.4';
+const APP_VERSION = '3.1.5';
 const SELECTED_BLOCK_SCROLL_MARGIN_PX = 8;
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;

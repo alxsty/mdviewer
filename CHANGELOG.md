@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.5
+
+- Ridotto lo spazio tra la X di chiusura file e i chip dei numeri riga nel box Markdown.
+- Aggiunto un override responsive per mantenere compatto lo spacing anche su layout stretti.
+
 ## 3.1.4
 
 - Corretto il posizionamento del Markdown renderizzato quando una riga/blocco selezionato viene scrollato al bordo visibile: il box azzurro non viene più tagliato sopra.

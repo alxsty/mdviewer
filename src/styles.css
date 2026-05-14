@@ -1048,7 +1048,7 @@ body.file-open .markdown-body {
 }
 
 body.file-open.line-numbers .markdown-body {
-  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width) + 3rem);
+  padding-left: calc(clamp(1.15rem, 3vw, 3rem) + var(--line-number-width) + 2.35rem);
 }
 
 .markdown-body.empty-state {
@@ -2048,6 +2048,10 @@ body.line-numbers .markdown-body [data-line-start]::before {
 
   body.line-numbers .markdown-body {
     padding-left: calc(1rem + var(--line-number-width) + 0.15rem);
+  }
+
+  body.file-open.line-numbers .markdown-body {
+    padding-left: calc(1rem + var(--line-number-width) + 2.15rem);
   }
 
   body.line-numbers .markdown-body [data-line-start]::before {
