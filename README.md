@@ -4,7 +4,7 @@ PWA installabile per visualizzare file Markdown locali in sola lettura, con indi
 
 Versione corrente: **3.1.5**
 
-Patch 3.1.5: rifinito lo spacing tra la X di chiusura file e i chip dei numeri riga nel reader Markdown.
+Maintenance release 3.1.5: rifiniture UX e fix incrementali della serie 3.1, con spacing più compatto tra la X di chiusura file e i chip dei numeri riga nel reader Markdown.
 
 - Installazione stabile: <https://alxsty.github.io/mdviewer/>
 - Versione dev / WIP: <https://alxsty.github.io/mdviewer/dev/>

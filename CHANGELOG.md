@@ -2,6 +2,7 @@
 
 ## 3.1.5
 
+- Maintenance release della serie 3.1 con rifiniture UX e fix incrementali.
 - Ridotto lo spazio tra la X di chiusura file e i chip dei numeri riga nel box Markdown.
 - Aggiunto un override responsive per mantenere compatto lo spacing anche su layout stretti.
 
