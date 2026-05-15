@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.6
+
+Maintenance release 3.1.6: corretto un bug di refresh del file collegato che poteva riportare il reader Markdown all’inizio quando la finestra/PWA tornava in primo piano. Il controllo passivo ora evita il reload se il file non è cambiato e preserva l’ancora visuale quando il file collegato viene aggiornato.
+
 ## 3.1.5
 
 - Maintenance release della serie 3.1 con rifiniture UX e fix incrementali.

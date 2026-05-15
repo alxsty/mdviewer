@@ -3,7 +3,7 @@ import './styles.css';
 import 'highlight.js/styles/github-dark.css';
 
 const SETTINGS_KEY = 'md-viewer-v1-settings';
-const APP_VERSION = '3.1.5';
+const APP_VERSION = '3.1.6';
 const SELECTED_BLOCK_SCROLL_MARGIN_PX = 8;
 const SERVICE_WORKER_UPDATE_THROTTLE_MS = 15_000;
 const FILE_BINDING_CHECK_THROTTLE_MS = 1_500;
@@ -134,6 +134,8 @@ const state = {
   worker: null,
   parseRequestId: 0,
   currentFileName: '',
+  currentFileSignature: null,
+  pendingMarkdownLineAnchor: null,
   markdownText: '',
   sourceLines: [],
   selectedLineStart: 1,
@@ -217,8 +219,9 @@ function updateAppViewportMetrics() {
 }
 
 function refreshViewportDependentLayout() {
-  updateAppViewportMetrics();
-  scheduleViewportDependentLayoutRefresh({ settle: true });
+  updateSourcePanelMobileHeight();
+  updateSourceVirtualList();
+  updateScrollJumpControls();
 }
 
 function scheduleViewportDependentLayoutRefresh({ settle = false } = {}) {
@@ -1662,6 +1665,8 @@ function isFileBindingMissingError(error) {
 
 function resetDocumentToEmptyState() {
   state.currentFileName = '';
+  state.currentFileSignature = null;
+  state.pendingMarkdownLineAnchor = null;
   state.markdownText = '';
   state.sourceLines = [];
   state.selectedLineStart = 1;
@@ -1777,8 +1782,15 @@ function renderMarkdown(html, frontmatter = null) {
     elements.markdownBody.prepend(metadataCard);
   }
 
-  elements.markdownBody.scrollTo({ top: 0 });
-  requestAnimationFrame(updateScrollJumpControls);
+  const pendingLineAnchor = state.pendingMarkdownLineAnchor;
+  state.pendingMarkdownLineAnchor = null;
+
+  if (pendingLineAnchor) {
+    scheduleMarkdownTopLineAnchorRestore(pendingLineAnchor);
+  } else {
+    elements.markdownBody.scrollTo({ top: 0 });
+    requestAnimationFrame(updateScrollJumpControls);
+  }
   requestAnimationFrame(() => {
     if (getSearchQuery().length >= SEARCH_MIN_LENGTH) {
       runSearch({ scrollToFirst: false });
@@ -1956,12 +1968,119 @@ function observeHeadings(tocItems) {
   }
 }
 
+
+function getFileSignature(file) {
+  if (!file) {
+    return null;
+  }
+
+  return {
+    name: file.name || '',
+    size: Number(file.size) || 0,
+    lastModified: Number(file.lastModified) || 0
+  };
+}
+
+function isSameFileSignature(firstSignature, secondSignature) {
+  return Boolean(
+    firstSignature
+    && secondSignature
+    && firstSignature.name === secondSignature.name
+    && firstSignature.size === secondSignature.size
+    && firstSignature.lastModified === secondSignature.lastModified
+  );
+}
+
+function getMarkdownTopLineAnchor() {
+  const anchor = getMarkdownTopVisualAnchor();
+
+  if (!anchor) {
+    return null;
+  }
+
+  if (!anchor.element) {
+    return {
+      lineStart: null,
+      lineEnd: null,
+      offsetRatio: 0,
+      fallbackScrollTop: anchor.fallbackScrollTop || 0
+    };
+  }
+
+  const lineStart = Number(anchor.element.getAttribute('data-line-start'));
+  const lineEnd = Number(anchor.element.getAttribute('data-line-end')) || lineStart;
+
+  if (!Number.isFinite(lineStart)) {
+    return {
+      lineStart: null,
+      lineEnd: null,
+      offsetRatio: 0,
+      fallbackScrollTop: anchor.fallbackScrollTop || 0
+    };
+  }
+
+  return {
+    lineStart,
+    lineEnd: Number.isFinite(lineEnd) ? lineEnd : lineStart,
+    offsetRatio: anchor.offsetRatio || 0,
+    fallbackScrollTop: anchor.fallbackScrollTop || 0
+  };
+}
+
+function restoreMarkdownTopLineAnchor(anchor) {
+  if (!anchor || !elements.markdownBody) {
+    return false;
+  }
+
+  if (!Number.isFinite(anchor.lineStart)) {
+    elements.markdownBody.scrollTop = anchor.fallbackScrollTop || 0;
+    updateScrollJumpControls();
+    return true;
+  }
+
+  const targetBlock = findRenderedBlockForLine(anchor.lineStart);
+  if (!targetBlock) {
+    elements.markdownBody.scrollTop = anchor.fallbackScrollTop || 0;
+    updateScrollJumpControls();
+    return true;
+  }
+
+  const container = elements.markdownBody;
+  const blockTop = getElementTopWithinScrollContainer(targetBlock, container);
+  const blockHeight = Math.max(targetBlock.getBoundingClientRect().height, 1);
+  const anchorOffsetRatio = Math.min(Math.max(anchor.offsetRatio || 0, 0), 0.98);
+  const selectedMargin = anchorOffsetRatio <= 0.02 ? getSelectedBlockScrollMargin(targetBlock) : 0;
+  const maxTop = Math.max(container.scrollHeight - container.clientHeight, 0);
+  const nextScrollTop = blockTop + (blockHeight * anchorOffsetRatio) - selectedMargin;
+
+  container.scrollTop = Math.min(Math.max(nextScrollTop, 0), maxTop);
+  updateScrollJumpControls();
+  return true;
+}
+
+function scheduleMarkdownTopLineAnchorRestore(anchor) {
+  if (!anchor) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    restoreMarkdownTopLineAnchor(anchor);
+    requestAnimationFrame(() => {
+      restoreMarkdownTopLineAnchor(anchor);
+    });
+  });
+}
+
 async function openMarkdownFile(file, options = {}) {
   if (!file) {
     return;
   }
 
-  const { clearBinding = true, statusPrefix = 'Caricamento' } = options;
+  const {
+    clearBinding = true,
+    statusPrefix = 'Caricamento',
+    preserveMarkdownLineAnchor = null
+  } = options;
 
   if (clearBinding) {
     state.currentFileLinked = false;
@@ -1969,19 +2088,26 @@ async function openMarkdownFile(file, options = {}) {
   }
 
   state.currentFileName = file.name;
+  state.currentFileSignature = getFileSignature(file);
   updateFileStatus();
   setStatus(`${statusPrefix} ${file.name} (${formatBytes(file.size)})…`);
 
   try {
     const text = await file.text();
-    loadMarkdownText(text, file.name);
+    loadMarkdownText(text, file.name, { preserveMarkdownLineAnchor });
   } catch (error) {
     setStatus(`Impossibile leggere il file: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
 async function openMarkdownFileFromHandle(handle, options = {}) {
-  const { saveBinding = false, statusPrefix = 'Caricamento', requestPermission = true } = options;
+  const {
+    saveBinding = false,
+    statusPrefix = 'Caricamento',
+    requestPermission = true,
+    skipIfUnchanged = false,
+    preserveMarkdownLineAnchor = null
+  } = options;
 
   const permission = await ensureFileReadPermission(handle, { requestPermission });
   if (permission !== 'granted') {
@@ -1989,6 +2115,7 @@ async function openMarkdownFileFromHandle(handle, options = {}) {
   }
 
   const file = await handle.getFile();
+  const fileSignature = getFileSignature(file);
   state.currentFileLinked = true;
   updateFileStatus();
 
@@ -1999,8 +2126,16 @@ async function openMarkdownFileFromHandle(handle, options = {}) {
     }
   }
 
-  await openMarkdownFile(file, { clearBinding: false, statusPrefix });
-  return file;
+  if (skipIfUnchanged && isSameFileSignature(fileSignature, state.currentFileSignature)) {
+    return { file, changed: false };
+  }
+
+  await openMarkdownFile(file, {
+    clearBinding: false,
+    statusPrefix,
+    preserveMarkdownLineAnchor
+  });
+  return { file, changed: true };
 }
 
 async function openMarkdownFileWithSystemPicker() {
@@ -2032,7 +2167,7 @@ async function openMarkdownFileWithSystemPicker() {
       ]
     });
 
-    const file = await openMarkdownFileFromHandle(handle, {
+    const { file } = await openMarkdownFileFromHandle(handle, {
       saveBinding: true,
       statusPrefix: 'Caricamento'
     });
@@ -2094,14 +2229,20 @@ async function restoreLastLinkedFile(options = {}) {
     setStatus(`${checkVerb}${fileName}…`);
 
     try {
-      const file = await openMarkdownFileFromHandle(storedBinding.handle, {
+      const passiveRefresh = isPassiveFileBindingReason(reason) && !requestPermission;
+      const preserveMarkdownLineAnchor = passiveRefresh ? getMarkdownTopLineAnchor() : null;
+      const { file, changed } = await openMarkdownFileFromHandle(storedBinding.handle, {
         saveBinding: true,
         statusPrefix: reason === 'startup' ? 'Ripristino' : 'Aggiornamento file',
-        requestPermission
+        requestPermission,
+        skipIfUnchanged: passiveRefresh,
+        preserveMarkdownLineAnchor
       });
       dismissToastsByTag(FILE_BINDING_PERMISSION_TOAST_TAG);
       pausePassiveFileBindingChecks();
-      setStatus(`File collegato aggiornato dal dispositivo: ${file.name}.`);
+      setStatus(changed
+        ? `File collegato aggiornato dal dispositivo: ${file.name}.`
+        : `File collegato verificato: ${file.name}.`);
       return true;
     } catch (error) {
       if (isFileBindingPermissionError(error)) {
@@ -2181,7 +2322,10 @@ function scheduleFileBindingChecks() {
   });
 }
 
-function loadMarkdownText(text, fileName = '') {
+function loadMarkdownText(text, fileName = '', options = {}) {
+  const { preserveMarkdownLineAnchor = null } = options;
+
+  state.pendingMarkdownLineAnchor = preserveMarkdownLineAnchor;
   state.markdownText = text;
   state.currentFileName = fileName;
   updateFileStatus();
